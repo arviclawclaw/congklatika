@@ -23,6 +23,8 @@ async function nav(page,id) {
   const link=page.locator(`.nav-link[data-page="${id}"]`);
   if (!(await link.isVisible())) { const toggle=page.locator('#menu-toggle'); if (await toggle.isVisible()) await toggle.click(); }
   await link.click();
+  const leave=page.locator('.quiz-leave-modal [data-action="quiz-leave-confirm"]');
+  if(await leave.count())await leave.click();
 }
 async function answerCurrent(page, answerCorrect=true) {
   for (let i=0;i<10;i++) {
@@ -109,9 +111,17 @@ async function answerCurrent(page, answerCorrect=true) {
     const savedQuestion=await page.locator('.quiz-card h2').innerText();
     await page.reload();
     ok(await page.locator('.quiz-card h2').innerText()===savedQuestion && await page.evaluate(()=>state.quizDraft?.answers.some(x=>x!==null)), 'draf jawaban dan posisi soal pulih setelah refresh');
-    let backPrompt=false; page.on('dialog',async d=>{if(d.type()==='confirm'&&d.message().includes('Draf'))backPrompt=true;await d.accept()});
-    await page.goBack(); await page.waitForFunction(()=>state.page==='learn');
-    ok(backPrompt && await page.evaluate(()=>state.page==='learn'&&state.quizDraft?.kind==='pre'), 'browser Back memperingatkan, lalu mempertahankan draf tes');
+    let nativeConfirm=false;page.on('dialog',async d=>{nativeConfirm=true;await d.dismiss()});
+    await page.goBack();const leaveDialog=page.locator('.quiz-leave-modal[role="dialog"][aria-modal="true"]');await leaveDialog.waitFor();
+    ok(await leaveDialog.getByRole('heading',{name:'Tes belum selesai'}).count()===1&&await leaveDialog.getByRole('button',{name:'Lanjut tes'}).count()===1&&await leaveDialog.getByRole('button',{name:'Tinggalkan tes'}).count()===1&&!nativeConfirm,'browser Back membuka dialog CongklaTika dengan dua pilihan, bukan confirm bawaan browser');
+    await leaveDialog.getByRole('button',{name:'Lanjut tes'}).focus();await page.keyboard.press('Tab');
+    ok(await page.evaluate(()=>document.activeElement.textContent.includes('Tinggalkan tes')),'fokus keyboard bergerak ke pilihan dialog berikutnya');
+    await page.keyboard.press('Tab');ok(await page.evaluate(()=>document.activeElement.textContent.includes('Lanjut tes')),'fokus keyboard dialog berputar kembali tanpa keluar dari popup');
+    await leaveDialog.getByRole('button',{name:'Lanjut tes'}).click();
+    ok(await page.evaluate(()=>state.page==='quiz'&&state.quizDraft?.kind==='pre'),'tombol Lanjut tes menutup dialog dan mempertahankan kuis aktif');
+    await page.locator('.nav-link[data-page="learn"]').click();await leaveDialog.waitFor();
+    await leaveDialog.getByRole('button',{name:'Tinggalkan tes'}).click();await page.waitForFunction(()=>state.page==='learn');
+    ok(await page.evaluate(()=>state.page==='learn'&&state.quizDraft?.kind==='pre'&&state.quizDraft.answers.some(x=>x!==null)),'Tinggalkan tes membuka materi tetapi mempertahankan draf jawaban tersimpan');
     await page.locator('[data-action="start-pretest"]').click();await answerCurrent(page,true);
     ok(await page.evaluate(()=>state.preScores.total===10&&state.preAttempts.length===1), 'hasil pretest disimpan sebagai percobaan pertama');
     await page.locator('[data-action="result-continue"]').click();await nav(page,'report');

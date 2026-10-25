@@ -307,3 +307,56 @@ button:disabled{opacity:.72}
   .study-question-options{gap:5px}
   .study-answer-button{font-size:14px}
 }
+
+
+/* Child-friendly quiz and learning-question dialogs. */
+.themed-modal-backdrop{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:calc(18px + env(safe-area-inset-top,0px)) 18px calc(18px + env(safe-area-inset-bottom,0px));background:rgba(28,40,31,.62);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+.themed-modal{position:relative;width:min(560px,100%);max-height:min(88dvh,780px);overflow:auto;padding:clamp(22px,5vw,36px);border:1px solid #f3e6c6;border-radius:30px;background:linear-gradient(155deg,#fffdf6 0%,#f5f8ee 100%);box-shadow:0 26px 80px rgba(18,37,25,.28);text-align:center;color:#20362e;animation:study-pop-in .2s ease-out}
+.themed-modal:focus{outline:none}
+.themed-modal-art{display:grid;place-items:center;width:68px;height:68px;margin:0 auto 12px;border-radius:24px;background:linear-gradient(145deg,#fff0be,#f5d985);font-size:34px;box-shadow:inset 0 0 0 1px #f1d68f}
+.themed-modal .eyebrow{margin:0 auto;background:#e9f2e5}
+.themed-modal h2{margin:10px auto 8px;font:800 clamp(25px,5vw,34px)/1.16 var(--display);letter-spacing:-.3px;color:#203b30}
+.themed-modal>p{max-width:440px;margin:0 auto;color:#506358;font-size:16px;line-height:1.58}
+.themed-modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px}
+.themed-modal-actions button{min-height:52px;padding:12px 15px;border-radius:16px;font-weight:900}
+.quiz-leave-modal .themed-modal-actions .ghost-button{border:1px solid #d8dfd2;background:#fffdf7;color:#315a45}
+.study-modal-backdrop{padding-top:calc(12px + env(safe-area-inset-top,0px));padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+.study-question-modal{width:min(610px,100%);padding:clamp(19px,4vw,32px)}
+.study-modal-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.study-modal-top .eyebrow{margin:0;font-size:11px}
+.study-modal-topic{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;background:#fff0cf;color:#634e25;font-size:12px;font-weight:900}
+.study-modal-art{width:56px;height:56px;margin:15px auto 8px;border-radius:19px;font-size:28px}
+.study-question-modal h2{max-width:520px;margin:8px auto 7px;font-size:clamp(22px,4.3vw,30px)}
+.study-modal-hint{margin:0 auto 14px!important;font-size:14px!important}
+.study-question-modal .study-question-options{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:12px}
+.study-question-modal .study-answer-button{min-height:54px;border:1.5px solid #dce3d8;background:#fffdf8;color:#285b45;font-size:18px;box-shadow:0 3px 8px rgba(49,72,55,.05)}
+.study-question-modal .study-answer-button:hover:not(:disabled),.study-question-modal .study-answer-button:focus-visible{border-color:#438564;background:#edf6ea}
+.study-question-modal .study-answer-button.selected{border-color:#438564;background:#e1f1df;box-shadow:inset 0 0 0 1px #438564}
+.study-question-modal .study-feedback{margin:14px 0 0;padding:12px 14px;text-align:left}
+.study-question-modal .study-feedback:focus{outline:3px solid #813b00;outline-offset:3px}
+.study-progress-card{display:flex;align-items:flex-start;gap:15px;max-width:900px;margin:18px auto;padding:19px 21px;border:1px solid #e2e9dc;border-radius:21px;background:linear-gradient(145deg,#fffdf7,#f0f6ea);box-shadow:0 9px 24px rgba(49,72,55,.06)}
+.study-progress-icon{display:grid;place-items:center;flex:none;width:48px;height:48px;border-radius:16px;background:#fff0c9;font-size:25px}
+.study-progress-copy{flex:1;min-width:0}
+.study-progress-copy .eyebrow{margin-bottom:5px}
+.study-progress-copy h2{margin:4px 0;font:800 clamp(20px,3vw,25px)/1.22 var(--display);color:#203b30}
+.study-progress-copy p{margin:4px 0 11px;color:#4d6155;line-height:1.55}
+.study-progress-copy .progress-track{height:9px}
+.play-page .pit.study-picked{border-color:#7da17d;background:radial-gradient(ellipse at 35% 28%,#455a43,#27372d);box-shadow:inset 0 4px 9px #120e0a88,0 2px 0 #96a886;color:#e7e8dc;cursor:not-allowed}
+.play-page .pit.study-picked .seed-count{color:#d9dfd2;text-decoration:line-through;text-decoration-color:#a4c395}
+@keyframes study-pop-in{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:520px){
+  .themed-modal-backdrop{padding-inline:12px}
+  .themed-modal{padding:22px 18px;border-radius:25px;max-height:88dvh}
+  .themed-modal-art{width:58px;height:58px;border-radius:20px;font-size:30px}
+  .themed-modal h2{font-size:26px}
+  .themed-modal>p{font-size:15px}
+  .themed-modal-actions{grid-template-columns:1fr;gap:8px;margin-top:19px}
+  .study-modal-top .eyebrow{font-size:10px;padding:6px 9px}
+  .study-modal-topic{font-size:11px;padding:6px 8px}
+  .study-modal-art{width:48px;height:48px;margin:10px auto 6px}
+  .study-question-modal .study-question-options{gap:7px}
+  .study-question-modal .study-answer-button{min-height:50px;padding:8px 5px;font-size:16px}
+  .study-progress-card{gap:11px;padding:15px}
+  .study-progress-icon{width:40px;height:40px;font-size:21px}
+}
+@media(prefers-reduced-motion:reduce){.themed-modal{animation:none}}

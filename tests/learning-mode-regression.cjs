@@ -54,30 +54,52 @@ async function pageAt(browser, url, options={}) {
     const gameBefore=await page.evaluate(()=>JSON.stringify(state.game));
     const scoresBefore=await page.evaluate(()=>JSON.stringify({pre:state.preScores,post:state.postScores,progress:state.levelProgress}));
     await page.locator('[data-play-mode="learning"]').click();
-    const trainingBoard=await page.evaluate(()=>({pits:document.querySelectorAll('[data-study-pit]').length,traditional:document.querySelectorAll('[data-pit]').length,stores:document.querySelectorAll('.board-shell .store-pit').length,seeds:initialStudyBoard().reduce((a,b)=>a+b,0),mode:playMode}));
-    ok(trainingBoard.pits===14&&trainingBoard.traditional===0&&trainingBoard.stores===2&&trainingBoard.seeds===98&&trainingBoard.mode==='learning','mode Belajar menampilkan 14 lubang dan dua lumbung tanpa memakai tombol gerak tradisional');
+    const trainingBoard=await page.evaluate(()=>({pits:document.querySelectorAll('[data-study-pit]').length,traditional:document.querySelectorAll('[data-pit]').length,stores:document.querySelectorAll('.board-shell .store-pit').length,seeds:studyRound.pits.reduce((a,b)=>a+b,0),smallPits:[0,1,2,3,4,5,6,8,9,10,11,12,13,14].map(i=>studyRound.pits[i]),storesEmpty:studyRound.pits[7]===0&&studyRound.pits[15]===0,mode:playMode}));
+    ok(trainingBoard.pits===14&&trainingBoard.traditional===0&&trainingBoard.stores===2&&trainingBoard.seeds===98&&trainingBoard.smallPits.every(n=>n>0)&&new Set(trainingBoard.smallPits).size>1&&trainingBoard.storesEmpty&&trainingBoard.mode==='learning','mode Belajar memulai ronde acak dengan 14 lubang berisi dan tepat 98 biji');
     await page.locator('[data-study-topic="addition"]').click();
     await page.locator('[data-study-pit="0"]').click();
-    ok((await page.locator('.study-question h2').innerText()).includes('menambah 3 biji'),'mengetuk lubang bernomor membuka soal yang memakai jumlah bijinya');
-    const answer=await page.evaluate(()=>studyQuestion.answer);
-    const wrong=answer===0?1:0;
-    await page.locator(`[data-study-answer="${wrong}"]`).click();
-    ok(await page.locator('.study-feedback.is-retry').count()===1&&await page.locator('[data-action="study-retry"]').count()===1,'jawaban keliru memberi umpan balik ramah dan tombol mencoba lagi');
-    await page.locator('[data-action="study-retry"]').click();
-    await page.locator(`[data-study-answer="${answer}"]`).click();
-    ok(await page.locator('.study-feedback.is-correct').count()===1,'jawaban benar memberi umpan balik yang jelas');
+    ok((await page.locator('.study-question-modal h2').innerText()).includes('menambah 3 biji')&&await page.locator('.study-question-modal[role="dialog"][aria-modal="true"]').count()===1,'mengetuk lubang membuka popup soal aksesibel dengan jumlah biji lubang');
+    const first=await page.evaluate(()=>({count:studyRound.pits[0],answer:studyQuestion.answer}));
+    await page.locator(`[data-study-answer="${first.answer===0?1:0}"]`).click();
+    await page.locator('.study-question-modal').waitFor({state:'detached'});
+    const wrongResult=await page.evaluate(()=>({right:studyRound.pits[7],left:studyRound.pits[15],pit:studyRound.pits[0],selected:studyRound.selected[0],count:studyRound.answered,total:studyRound.pits.reduce((a,b)=>a+b,0),modal:!!document.querySelector('.study-question-modal')}));
+    ok(wrongResult.left===first.count&&wrongResult.right===0&&wrongResult.pit===0&&wrongResult.selected&&wrongResult.count===1&&wrongResult.total===98&&!wrongResult.modal,'jawaban salah menutup popup otomatis, menandai lubang, dan memindahkan seluruh bijinya ke lumbung Buji kiri');
+    await page.locator('[data-study-pit="1"]').click();
+    const second=await page.evaluate(()=>({count:studyRound.pits[1],answer:studyQuestion.answer}));
+    await page.locator(`[data-study-answer="${second.answer}"]`).click();
+    await page.locator('.study-question-modal').waitFor({state:'detached'});
+    const rightResult=await page.evaluate(()=>({right:studyRound.pits[7],left:studyRound.pits[15],pit:studyRound.pits[1],selected:studyRound.selected[1],count:studyRound.answered,total:studyRound.pits.reduce((a,b)=>a+b,0)}));
+    ok(rightResult.right===second.count&&rightResult.left===first.count&&rightResult.pit===0&&rightResult.selected&&rightResult.count===2&&rightResult.total===98,'jawaban benar masuk ke lumbung pemain kanan dan biji tetap terhitung tepat');
 
     const operations=[['subtraction','Pindahkan'],['multiplication','lubang memiliki isi sama'],['division','dibagikan rata'],['fraction','pecahan apa']];
-    for(const [topic,phrase] of operations){
+    const used=new Set([0,1]);
+    for(const [operationIndex,[topic,phrase]] of operations.entries()){
       await page.locator(`[data-study-topic="${topic}"]`).click();
-      await page.locator('[data-study-pit="9"]').click();
-      ok((await page.locator('.study-question h2').innerText()).toLowerCase().includes(phrase.toLowerCase())&&await page.evaluate(()=>studyQuestion.topicId)===topic,`lubang membuka soal interaktif jenis ${topic}`);
-      const correct=await page.evaluate(()=>studyQuestion.answer);
-      await page.locator(`[data-study-answer="${correct}"]`).click();
-      ok(await page.locator('.study-feedback.is-correct').count()===1,`${topic}: jawaban benar dan umpan balik interaktif`);
+      const pitIndex=9+operationIndex;used.add(pitIndex);
+      await page.locator(`[data-study-pit="${pitIndex}"]`).click();
+      ok((await page.locator('.study-question-modal h2').innerText()).toLowerCase().includes(phrase.toLowerCase())&&await page.evaluate(()=>studyQuestion.topicId)===topic,`lubang membuka popup soal interaktif jenis ${topic}`);
+      const before=await page.evaluate(i=>({count:studyRound.pits[i],answer:studyQuestion.answer,right:studyRound.pits[7],left:studyRound.pits[15]}),pitIndex);
+      await page.locator(`[data-study-answer="${before.answer}"]`).click();
+      await page.locator('.study-question-modal').waitFor({state:'detached'});
+      const after=await page.evaluate(i=>({right:studyRound.pits[7],left:studyRound.pits[15],pit:studyRound.pits[i],selected:studyRound.selected[i],total:studyRound.pits.reduce((a,b)=>a+b,0)}),pitIndex);
+      ok(after.right===before.right+before.count&&after.left===before.left&&after.pit===0&&after.selected&&after.total===98,`${topic}: feedback singkat lalu biji dipindahkan tanpa kehilangan hitungan`);
     }
-    const preserved=await page.evaluate(()=>({game:JSON.stringify(state.game),scores:JSON.stringify({pre:state.preScores,post:state.postScores,progress:state.levelProgress})}));
-    ok(preserved.game===gameBefore&&preserved.scores===scoresBefore,'latihan tidak mengubah permainan, skor tes, atau progres materi');
+    for(const pitIndex of [2,3,4,5,6,8,13,14]){
+      await page.locator(`[data-study-pit="${pitIndex}"]`).click();
+      const pick=await page.evaluate(i=>({count:studyRound.pits[i],answer:studyQuestion.answer,round:studyRound.answered}),pitIndex);
+      const correct=pick.round%2===0,answer=correct?pick.answer:(pick.answer===0?1:0);
+      await page.locator(`[data-study-answer="${answer}"]`).click();
+      await page.locator('.study-question-modal').waitFor({state:'detached'});
+      used.add(pitIndex);
+      const accounting=await page.evaluate(()=>({left:studyRound.pits[15],right:studyRound.pits[7],pits:[0,1,2,3,4,5,6,8,9,10,11,12,13,14].map(i=>studyRound.pits[i]),selected:studyRound.selected.filter(Boolean).length,total:studyRound.pits.reduce((a,b)=>a+b,0)}));
+      ok(accounting.selected===used.size&&accounting.total===98&&accounting.pits.filter(n=>n===0).length===used.size&&accounting.left+accounting.right+accounting.pits.reduce((a,b)=>a+b,0)===98,`lubang ${pitIndex} selesai dipilih satu kali dan konservasi biji tetap 98`);
+    }
+    const complete=await page.evaluate(()=>({stores:[studyRound.pits[15],studyRound.pits[7]],selected:studyRound.selected.filter(Boolean).length,pits:[0,1,2,3,4,5,6,8,9,10,11,12,13,14].map(i=>studyRound.pits[i]),total:studyRound.pits.reduce((a,b)=>a+b,0),progress:document.querySelector('.study-progress-card h2')?.textContent||'',disabled:[...document.querySelectorAll('[data-study-pit]')].filter(el=>el.disabled).length}));
+    ok(complete.selected===14&&complete.pits.every(n=>n===0)&&complete.stores[0]+complete.stores[1]===98&&complete.total===98&&complete.progress.includes('semua lubang')&&complete.disabled===14,'14 lubang habis dipilih tepat sekali; lumbung kiri dan kanan bersama menyimpan 98 biji');
+    await page.locator('[data-study-pit="0"]').click({force:true});
+    ok(await page.locator('.study-question-modal').count()===0,'lubang yang sudah dipilih tidak dapat dimainkan ulang');
+    await page.locator('[data-action="study-reset"]').click();
+    ok(await page.evaluate(()=>studyRound.answered===0&&studyRound.pits.reduce((a,b)=>a+b,0)===98&&studyRound.pits[7]===0&&studyRound.pits[15]===0),'tombol ronde baru mengacak kembali 98 biji tanpa mengubah aturan congklak');
     await page.locator('[data-play-mode="traditional"]').click();
     ok(await page.locator('[data-pit]').count()===14&&await page.locator('[data-study-pit]').count()===0&&await page.locator('[data-game-mode]').count()===2,'mode Tradisional tetap menyediakan 14 lubang dan pilihan 2 pemain/Buji');
     await page.locator('[data-pit="0"]').click();
@@ -96,8 +118,14 @@ async function pageAt(browser, url, options={}) {
       await mobile.locator('[data-play-mode="learning"]').click();
       await mobile.locator('[data-study-topic="fraction"]').click();
       await mobile.locator('[data-study-pit="0"]').click();
-      const learning=await mobile.evaluate(()=>({overflow:document.documentElement.scrollWidth-innerWidth,question:!!document.querySelector('.study-question h2'),target:document.querySelector('[data-study-answer]')?.getBoundingClientRect().height||0}));
-      ok(learning.overflow===0&&learning.question&&learning.target>=44,`${width}px: mode Belajar, soal, dan tombol jawaban muat tanpa overflow`);
+      const learning=await mobile.evaluate(()=>({overflow:document.documentElement.scrollWidth-innerWidth,question:!!document.querySelector('.study-question-modal[role="dialog"][aria-modal="true"] h2'),target:document.querySelector('[data-study-answer]')?.getBoundingClientRect().height||0,dialog:document.querySelector('.study-question-modal')?.getBoundingClientRect(),viewport:innerWidth}));
+      ok(learning.overflow===0&&learning.question&&learning.target>=44&&learning.dialog.left>=0&&learning.dialog.right<=learning.viewport,`${width}px: popup Belajar dan target jawaban muat pada layar ponsel tanpa overflow`);
+      await mobile.locator('[data-study-answer]').first().focus();await mobile.keyboard.press('Tab');
+      ok(await mobile.evaluate(()=>document.activeElement.matches('[data-study-answer]')),'Tab tetap berada pada satu pilihan radio yang menjadi fokus popup');
+      await mobile.locator('[data-study-answer]').first().press('Escape');
+      ok(await mobile.locator('.study-question-modal').count()===1,'Escape tidak membuang soal yang sedang dikerjakan');
+      await mobile.locator('[data-study-answer]').first().press('ArrowRight');await mobile.locator('.study-question-modal').waitFor({state:'detached'});
+      ok(await mobile.evaluate(()=>studyRound.answered===1&&studyRound.pits[7]>0&&studyRound.pits.reduce((a,b)=>a+b,0)===98),`${width}px: keyboard memilih jawaban, menutup soal otomatis, dan menjaga jumlah biji`);
       await mobileContext.close();
     }
     ok(errors.length===0,`tidak ada JavaScript page error (${errors.join('; ')})`);
