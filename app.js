@@ -324,8 +324,40 @@ function seedDots(count){
   const shown=Math.min(count,12),extra=Math.max(0,count-shown);
   return Array.from({length:shown},()=>'<i class="seed seed-dot" aria-hidden="true">●</i>').join('')+(extra?`<b class="seed-overflow" aria-label="dan ${extra} biji lagi">+${extra}</b>`:'');
 }
+function questionSeedMarks(count){
+  if(count>=10){const tens=Math.floor(count/10),ones=count%10;return `<span class="question-tens" aria-hidden="true">${Array.from({length:tens},()=>'<i class="question-tens-bundle">10</i>').join('')}</span>${Array.from({length:ones},()=>'<i class="question-seed"></i>').join('')}`}
+  return Array.from({length:count},()=>'<i class="question-seed"></i>').join('');
+}
+function renderQuestionPit(label,count,muted=false){
+  return `<div class="question-pit${muted?' is-muted':''}" aria-label="${esc(label)}, ${count} biji"><span class="question-pit-label">${esc(label)}</span><span class="question-pit-seeds" aria-hidden="true">${questionSeedMarks(count)}</span><strong class="question-pit-count">${count}</strong></div>`;
+}
+function renderQuestionIllustration(t,prompt){
+  const level=state.activeLevel;let title='',description='',operation='',pits='',legend='';
+  if(t.id==='addition'){
+    const match=prompt[0].match(/(\d+)\s*\+\s*(\d+)/);if(!match)return '';
+    const a=Number(match[1]),b=Number(match[2]);title='Gabungkan dua kelompok';description='Setiap lubang menunjukkan satu kelompok biji dari soal.';operation=`${a} biji + ${b} biji`;pits=renderQuestionPit('Kelompok A',a)+renderQuestionPit('Kelompok B',b);legend='Ikat puluhan bernilai 10 biji; titik kecil menunjukkan biji satuan.';
+  }else if(t.id==='subtraction'){
+    const match=prompt[0].match(/(\d+)\s*−\s*(\d+)/);if(!match)return '';
+    const a=Number(match[1]),b=Number(match[2]);title='Pindahkan sebagian biji';description='Lihat biji yang semula ada dan kelompok yang dipindahkan; cari tahu berapa yang tertinggal.';operation=`${a} biji − ${b} biji`;pits=renderQuestionPit('Semula',a)+renderQuestionPit('Dipindah',b,true);legend='Ikat puluhan bernilai 10 biji; titik kecil menunjukkan biji satuan.';
+  }else if(t.id==='multiplication'){
+    const match=prompt[0].match(/(\d+)\s*×\s*(\d+)/);if(!match)return '';
+    const groups=Number(match[1]),seeds=Number(match[2]);title='Kelompok yang sama banyak';description=`Setiap lubang adalah satu kelompok dengan ${seeds} biji.`;operation=`${groups} lubang × ${seeds} biji`;pits=Array.from({length:groups},(_,i)=>renderQuestionPit(`Lubang ${i+1}`,seeds)).join('');legend='Bandingkan isi setiap lubang, lalu hitung semua kelompok.';
+  }else if(t.id==='division'){
+    const match=prompt[0].match(/(\d+)\s*÷\s*(\d+)/);if(!match)return '';
+    const total=Number(match[1]),groups=Number(match[2]),each=total/groups;title='Bagikan biji dengan rata';description=`${total} biji dibagikan sama banyak ke ${groups} lubang.`;operation=`${total} biji ÷ ${groups} lubang`;pits=Array.from({length:groups},(_,i)=>renderQuestionPit(`Lubang ${i+1}`,each)).join('');legend='Setiap lubang menerima jumlah yang sama; hitung bijinya satu per satu.';
+  }else if(t.id==='fraction'){
+    title='Bagian sama besar di papan';
+    const selected=level===1?1:level===2?2:3;
+    description=level===1?'Satu dari empat lubang mewakili satu bagian dari satu utuh.':level===2?'Dua dari empat bagian sama besar membentuk satu dari dua pasangan.':'Setengah sama dengan dua perempat; tambahkan satu bagian perempat.';
+    operation=level===1?'1 dari 4 bagian':level===2?'2/4 sama dengan 1/2':'1/2 + 1/4';
+    pits=Array.from({length:4},(_,i)=>{const tone=level===3?(i<2?' fraction-half':i===2?' fraction-quarter':''):(i<selected?' fraction-selected':'');return `<div class="question-pit fraction-pit${tone}" aria-label="Bagian ${i+1} dari 4 bagian sama besar"><span class="question-pit-label">Bagian ${i+1}</span><span class="fraction-bead" aria-hidden="true">●</span><strong class="fraction-part-label">1/4</strong></div>`}).join('');
+    legend=level===3?'<span class="fraction-legend-key half-key"></span>1/2 <span class="fraction-legend-key quarter-key"></span>1/4':'Semua bagian berukuran sama; bagian berwarna menunjukkan yang diambil.';
+  }else return '';
+  return `<section class="question-illustration" data-question-illustration="${t.id}-${level}" aria-label="Ilustrasi congklak untuk ${esc(t.name)}, level ${level}"><div class="question-illustration-heading"><span class="eyebrow">Papan mini sesuai soal</span><strong>${title}</strong><p>${description}</p></div><div class="question-board" role="img" aria-label="Papan congklak mini. ${esc(operation)}. ${esc(description)}"><div class="question-board-row"><span class="question-board-store" aria-hidden="true">Lumbung</span><div class="question-pits">${pits}</div><span class="question-board-store" aria-hidden="true">Lumbung</span></div></div><p class="question-operation">${operation}</p><p class="question-legend">${legend}</p></section>`;
+}
 function renderVisualPractice(t){
-  const m=visualModel[t.id];if(!m)return '';
+  const prompt=levelChallenges[t.id][state.activeLevel-1],questionDiagram=renderQuestionIllustration(t,prompt);
+  const m=visualModel[t.id];if(!m)return questionDiagram;
   let title='',controls='',picture='',equation='';
   if(t.id==='multiplication'){
     title='Buat kelompok biji yang sama banyak';
@@ -344,7 +376,7 @@ function renderVisualPractice(t){
     picture=`<div class="fraction-bar" role="img" aria-label="${m.selected} dari ${m.parts} bagian diwarnai">${Array.from({length:m.parts},(_,i)=>`<span class="fraction-part ${i<m.selected?'chosen':''}"></span>`).join('')}</div>`;
     equation=`${m.selected} dari ${m.parts} bagian sama besar = <strong>${m.selected}/${m.parts}</strong>`;
   }
-  return `<section class="visual-practice" aria-label="Latihan visual ${t.name}"><div class="visual-heading"><span class="eyebrow">Coba sendiri · latihan visual</span><h3>${title}</h3><p>Tekan + atau −, lalu amati perubahan gambar dan hitungannya.</p></div><div class="visual-controls">${controls}</div>${picture}<div class="visual-equation" aria-live="polite">${equation}</div></section>`;
+  return `${questionDiagram}<section class="visual-practice" aria-label="Latihan visual ${t.name}"><div class="visual-heading"><span class="eyebrow">Coba sendiri · latihan visual</span><h3>${title}</h3><p>Tekan + atau −, lalu amati perubahan gambar dan hitungannya.</p></div><div class="visual-controls">${controls}</div>${picture}<div class="visual-equation" aria-live="polite">${equation}</div></section>`;
 }
 function workedExample(t){
   const level=state.activeLevel;

@@ -155,6 +155,52 @@ button:disabled{opacity:.72}
 
 
 @media(max-width:420px){
-  .play-page .pit .seed-overflow{background:#d6a747;color:#4b3218;border-color:#efc269;box-shadow:0 1px 2px #26170a}
+  .play-page .store-pit .seed-overflow{background:#d6a747;color:#4b3218;border-color:#efc269;box-shadow:0 1px 2px #26170a}
   .play-page .store-pit small{font-size:6px;padding:0 1px;overflow:hidden;text-overflow:clip}
+}
+
+/* Keep each lumbung name horizontally aligned with its seed count. */
+.play-page .store-pit small{left:0;right:0;text-align:center}
+
+/* Question-linked congklak diagrams for the active lesson challenge. */
+.question-illustration{margin:16px 0;padding:16px;border:1px solid #e8e2d2;border-radius:18px;background:#fffdf7}
+.question-illustration-heading{display:grid;gap:3px;margin-bottom:12px}
+.question-illustration-heading>strong{font:800 19px/1.25 var(--display);color:#284c39}
+.question-illustration-heading p{margin:0;color:#4d6155;font-size:13px;line-height:1.45}
+.question-board{padding:12px;border:5px solid #d2995f;border-radius:22px;background:linear-gradient(145deg,#a66f43,#6a4229);box-shadow:inset 0 2px 8px #51341e70}
+.question-board-row{display:grid;grid-template-columns:52px minmax(0,1fr) 52px;gap:8px;align-items:stretch}
+.question-board-store{display:grid;place-items:center;min-height:78px;padding:4px;border:1px solid #dca969;border-radius:45%;background:radial-gradient(ellipse at 35% 28%,#613d27,#2e241b);color:#ffe4ad;text-align:center;font:800 8px/1.15 var(--body);overflow-wrap:anywhere}
+.question-pits{display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:7px;min-width:0}
+.question-pit{display:flex;flex:0 1 72px;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:52px;max-width:78px;min-height:72px;padding:5px 3px;border:1px solid #d7a270;border-radius:50%;background:radial-gradient(ellipse at 35% 28%,#613d27,#2e241b);color:#fff4d4;box-shadow:inset 0 3px 6px #120e0a88,0 2px 0 #dbad7a;text-align:center}
+.question-pit-label{max-width:100%;font-size:9px;font-weight:800;line-height:1.05;overflow-wrap:anywhere}
+.question-pit-seeds{display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:2px;min-height:11px;max-width:58px}
+.question-seed{display:block;width:5px;height:5px;border-radius:50%;background:#e6bb68;box-shadow:inset -1px -1px 1px #8d632e}
+.question-tens{display:flex;flex-wrap:wrap;justify-content:center;gap:2px}
+.question-tens-bundle{display:grid;place-items:center;min-width:15px;height:11px;padding:0 2px;border-radius:6px;background:#f0cb79;color:#4e371c;font:800 7px/1 var(--body);font-style:normal}
+.question-pit-count{font:800 11px/1 var(--body);color:#ffe4ad}
+.question-pit.is-muted{opacity:.66;background:radial-gradient(ellipse at 35% 28%,#796c58,#39332b)}
+.question-operation{margin:9px 0 0;text-align:center;font-weight:900;color:#344e3d}
+.question-legend{margin:4px 0 0;text-align:center;color:#526658;font-size:12px;line-height:1.45}
+.fraction-pit{background:radial-gradient(ellipse at 35% 28%,#613d27,#2e241b)}
+.fraction-pit .fraction-bead{font-size:16px;line-height:1;color:#e6bb68;text-shadow:0 1px 2px #160f08}
+.fraction-pit .fraction-part-label{font:800 10px/1 var(--body);color:#ffe4ad}
+.fraction-pit.fraction-selected{border-color:#a9d18d;background:radial-gradient(ellipse at 35% 28%,#47784f,#284e36)}
+.fraction-pit.fraction-half{border-color:#a9d18d;background:radial-gradient(ellipse at 35% 28%,#47784f,#284e36)}
+.fraction-pit.fraction-quarter{border-color:#f2c96f;background:radial-gradient(ellipse at 35% 28%,#977135,#5d4320)}
+.fraction-legend-key{display:inline-block;width:9px;height:9px;margin:0 4px 0 8px;border-radius:50%;vertical-align:-1px;background:#47784f}
+.fraction-legend-key.quarter-key{background:#977135}
+@media(max-width:520px){
+  .question-illustration{padding:12px;margin:13px 0}
+  .question-board{padding:8px;border-width:4px;border-radius:18px}
+  .question-board-row{grid-template-columns:34px minmax(0,1fr) 34px;gap:5px}
+  .question-board-store{min-height:68px;padding:2px;font-size:7px}
+  .question-pits{gap:5px}
+  .question-pit{flex-basis:60px;min-width:46px;max-width:68px;min-height:65px;padding:4px 2px}
+  .question-pit-label{font-size:8px}
+  .question-pit-seeds{max-width:52px}
+}
+@media(max-width:350px){
+  .question-board-row{grid-template-columns:28px minmax(0,1fr) 28px;gap:3px}
+  .question-board-store{font-size:6px}
+  .question-pit{flex-basis:54px;min-width:44px;max-width:60px;min-height:61px}
 }

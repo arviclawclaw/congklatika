@@ -77,12 +77,26 @@ async function answerCurrent(page, answerCorrect=true) {
 
     await page.evaluate(()=>{state.levelProgress[1]=topics.map(t=>t.id);state.levelProgress[2]=topics.map(t=>t.id);state.activeLevel=2;state.activeTopic='addition';save();render()});
     ok((await page.locator('.worked-example').innerText()).includes('puluhan dan satuan'), 'contoh level 2 memecah penjumlahan menjadi puluhan dan satuan');
-    await page.evaluate(()=>{state.activeLevel=3;state.activeTopic='subtraction';render()});
-    ok((await page.locator('.worked-example').innerText()).includes('kurangi bertahap'), 'contoh level 3 menjelaskan pengurangan bertahap');
-    await page.evaluate(()=>{state.activeTopic='fraction';render()});
-    ok((await page.locator('.worked-example').innerText()).includes('samakan ukuran bagian'), 'contoh level 3 menyamakan ukuran bagian pecahan');
+     await page.evaluate(()=>{state.activeLevel=3;state.activeTopic='subtraction';render()});
+     ok((await page.locator('.worked-example').innerText()).includes('kurangi bertahap'), 'contoh level 3 menjelaskan pengurangan bertahap');
+     await page.evaluate(()=>{state.activeTopic='fraction';render()});
+     ok((await page.locator('.worked-example').innerText()).includes('samakan ukuran bagian'), 'contoh level 3 menyamakan ukuran bagian pecahan');
 
-    const slots=await page.evaluate(()=>{const q=createQuiz('pre');return {n:q.length,cats:q.reduce((a,x)=>(a[x.cat]=(a[x.cat]||0)+1,a),{}),positions:q.reduce((a,x)=>(a[x.answer]=(a[x.answer]||0)+1,a),{})}});
+    const lessonIllustrations=[
+      {topic:'addition',level:3,operation:'56 biji + 37 biji'},
+      {topic:'subtraction',level:2,operation:'42 biji − 17 biji'},
+      {topic:'multiplication',level:3,operation:'12 lubang × 8 biji'},
+      {topic:'division',level:3,operation:'96 biji ÷ 12 lubang'},
+      {topic:'fraction',level:3,operation:'1/2 + 1/4'},
+    ];
+    for(const item of lessonIllustrations){
+      await page.evaluate(({topic,level})=>{state.activeLevel=level;state.activeTopic=topic;render()},item);
+      ok(await page.locator(`[data-question-illustration="${item.topic}-${item.level}"]`).count()===1&&(await page.locator('.question-operation').innerText()).includes(item.operation), `desktop: ilustrasi ${item.topic} mengikuti tantangan level ${item.level}`);
+    }
+    const preservedQuestions=await page.evaluate(()=>['pre','post'].map(kind=>{const questions=createQuiz(kind);const categories=questions.reduce((counts,q)=>(counts[q.cat]=(counts[q.cat]||0)+1,counts),{});return {length:questions.length,categories}}));
+    ok(preservedQuestions.every(result=>result.length===10&&['addition','subtraction','multiplication','division','fraction'].every(id=>result.categories[id]===2)), 'ilustrasi tidak mengubah jumlah tes: 10 soal dan dua soal per kategori');
+
+     const slots=await page.evaluate(()=>{const q=createQuiz('pre');return {n:q.length,cats:q.reduce((a,x)=>(a[x.cat]=(a[x.cat]||0)+1,a),{}),positions:q.reduce((a,x)=>(a[x.answer]=(a[x.answer]||0)+1,a),{})}});
     ok(slots.n===10 && Object.values(slots.cats).every(n=>n===2), 'setiap percobaan tes memilih dua soal per kategori');
     ok(Object.keys(slots.positions).length===3 && Object.values(slots.positions).every(n=>n>=2&&n<=4), 'kunci jawaban tersebar pada tiga posisi dengan sebaran berimbang');
 
@@ -130,10 +144,12 @@ async function answerCurrent(page, answerCorrect=true) {
     const reportTable=await page.locator('.score-table').innerText();
     ok(reportTable.toLowerCase().includes('pretest pasangan posttest')&&reportTable.includes('/2')&&!reportTable.includes('%')&&await page.locator('.source-note').filter({hasText:/Pretest yang lebih baru tetap disimpan/}).count()===1, 'laporan menampilkan baseline berpasangan, jumlah benar, dan retake lebih baru secara terpisah');
 
-    await page.evaluate(()=>{setPage('play');state.game=initialGame('two');state.game.pits[0]=13;state.game.pits[1]=1;render();save()});
-    ok(await page.locator('[data-pit="0"] .seed-count').innerText()==='13' && await page.locator('[data-pit="0"] .seed-overflow').innerText()==='+1' && (await page.locator('[data-pit="0"] .seed').count())===12, 'lubang 13 biji menunjukkan 12 butir plus sisa +1 secara tepat');
-    ok((await page.locator('[data-pit="0"]').getAttribute('aria-label')).includes('13 biji'), 'pembaca layar mendapat jumlah lubang yang sebenarnya');
-    await page.locator('[data-action="new-game"]').click();
+     await page.evaluate(()=>{setPage('play');state.game=initialGame('two');state.game.pits[0]=13;state.game.pits[1]=1;render();save()});
+     ok(await page.locator('[data-pit="0"] .seed-count').innerText()==='13' && await page.locator('[data-pit="0"] .seed-overflow').innerText()==='+1' && (await page.locator('[data-pit="0"] .seed').count())===12, 'lubang 13 biji menunjukkan 12 butir plus sisa +1 secara tepat');
+     ok((await page.locator('[data-pit="0"]').getAttribute('aria-label')).includes('13 biji'), 'pembaca layar mendapat jumlah lubang yang sebenarnya');
+    const desktopStoreCenters=await page.evaluate(()=>[...document.querySelectorAll('.store-pit')].map(store=>{const count=store.querySelector('.store-count').getBoundingClientRect(),label=store.querySelector('small').getBoundingClientRect();return Math.abs((count.left+count.width/2)-(label.left+label.width/2))}));
+    ok(desktopStoreCenters.every(delta=>delta<2), 'desktop: label nama pemain tepat di tengah angka lumbung');
+     await page.locator('[data-action="new-game"]').click();
     await page.locator('[data-pit="0"]').click(); await page.waitForFunction(()=>state.game?.animating===true);
     await nav(page,'home');
     const persisted=await page.evaluate(()=>({sum:state.game.pits.reduce((a,b)=>a+b,0),animating:state.game.animating,stored:JSON.parse(localStorage.getItem('congklatika.v1')).game.pits.reduce((a,b)=>a+b,0)}));
@@ -151,10 +167,16 @@ async function answerCurrent(page, answerCorrect=true) {
       const mc=await newContext(browser,{viewport:{width,height:800},isMobile:true,hasTouch:true}),mp=await mc.newPage();mp.setDefaultTimeout(5000);mp.on('pageerror',e=>pageErrors.push(e.message));await goto(mp,url);
       const before=await mp.evaluate(()=>({overflow:document.documentElement.scrollWidth-innerWidth,header:[...document.querySelectorAll('.site-header>* , .header-actions>*')].filter(e=>getComputedStyle(e).display!=='none').map(e=>{const r=e.getBoundingClientRect();return [r.left,r.right]} )}));
       ok(before.overflow===0&&before.header.every(([l,r])=>l>=-1&&r<=width+1), `${width}px: header muat dan tidak ada overflow horizontal`);
-      await mp.locator('#menu-toggle').click(); await mp.locator('.nav-link[data-page="play"]').click();
-      const layout=await mp.evaluate(()=>{const r=document.querySelector('.board-shell').getBoundingClientRect();return {overflow:document.documentElement.scrollWidth-innerWidth,left:r.left,right:r.right,pit:document.querySelector('[data-pit]').getBoundingClientRect().width}});
-      ok(layout.overflow===0&&layout.left>=-1&&layout.right<=width+1&&layout.pit>=31, `${width}px: papan dan target lubang tetap terlihat serta dapat disentuh`);
-      await mc.close();
+       await mp.locator('#menu-toggle').click(); await mp.locator('.nav-link[data-page="play"]').click();
+       const layout=await mp.evaluate(()=>{const r=document.querySelector('.board-shell').getBoundingClientRect();return {overflow:document.documentElement.scrollWidth-innerWidth,left:r.left,right:r.right,pit:document.querySelector('[data-pit]').getBoundingClientRect().width}});
+       ok(layout.overflow===0&&layout.left>=-1&&layout.right<=width+1&&layout.pit>=31, `${width}px: papan dan target lubang tetap terlihat serta dapat disentuh`);
+      if(width===390){
+        const centers=await mp.evaluate(()=>[...document.querySelectorAll('.store-pit')].map(store=>{const count=store.querySelector('.store-count').getBoundingClientRect(),label=store.querySelector('small').getBoundingClientRect();return Math.abs((count.left+count.width/2)-(label.left+label.width/2))}));
+        ok(centers.every(delta=>delta<2), '390px: label Buji/Kamu tepat di tengah angka lumbung');
+        const lessonLayouts=await mp.evaluate(topics=>topics.map(topic=>{state.page='learn';state.activeLevel=3;state.activeTopic=topic;render();const item=document.querySelector('.question-illustration'),rect=item.getBoundingClientRect();return {topic:item?.dataset.questionIllustration,inside:rect.left>=-1&&rect.right<=innerWidth+1,overflow:document.documentElement.scrollWidth-innerWidth}}),['addition','multiplication','division','fraction']);
+        ok(lessonLayouts.every(item=>item.topic&&item.inside&&item.overflow===0), '390px: ilustrasi tambah, kali, bagi, pecahan muat tanpa overflow');
+      }
+       await mc.close();
     }
 
     const broken=await newContext(browser),brokenPage=await broken.newPage();brokenPage.setDefaultTimeout(5000);brokenPage.on('pageerror',e=>pageErrors.push(e.message));await brokenPage.addInitScript(()=>localStorage.setItem('congklatika.v1','{broken'));await goto(brokenPage,url);
