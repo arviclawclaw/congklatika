@@ -17,7 +17,7 @@ const server = http.createServer((req, res) => {
 });
 async function startServer() { await new Promise(resolve => server.listen(0, '127.0.0.1', resolve)); return `http://127.0.0.1:${server.address().port}/`; }
 async function newContext(browser, options={}) { return browser.newContext({viewport:{width:1280,height:900},...options}); }
-async function goto(page,url) { await page.goto(url,{waitUntil:'domcontentloaded'}); await page.locator('#app').waitFor(); }
+async function goto(page,url,{onboard=true}={}) { await page.goto(url,{waitUntil:'domcontentloaded'}); await page.locator('#app').waitFor(); if(onboard&&await page.locator('.profile-modal').count()){await page.locator('#profile-name').fill('Teman');await page.locator('[data-profile-character=\"buji\"]').click();await page.locator('#profile-form [type=\"submit\"]').click();await page.locator('.profile-modal').waitFor({state:'detached'})} }
 async function nav(page,id) {
   if(id==='home'){await page.locator('.brand[data-page="home"]').first().click();return}
   const link=page.locator(`.nav-link[data-page="${id}"]`);
@@ -43,6 +43,30 @@ async function answerCurrent(page, answerCorrect=true) {
   const browser=await chromium.launch(launchOptions);
   const pageErrors=[];
   try {
+    const welcome=await newContext(browser),welcomePage=await welcome.newPage();welcomePage.setDefaultTimeout(5000);welcomePage.on('pageerror',e=>pageErrors.push(e.message));await goto(welcomePage,url,{onboard:false});
+    const welcomeDialog=welcomePage.locator('.profile-modal[role=\"dialog\"][aria-modal=\"true\"]');
+    ok(await welcomeDialog.count()===1&&await welcomePage.locator('#profile-name[required]').count()===1&&await welcomePage.locator('[data-profile-character]').count()===4,'pengunjung baru mendapat popup wajib untuk nama panggilan dan empat pilihan karakter');
+    await welcomePage.keyboard.press('Escape');await welcomePage.locator('.profile-modal-backdrop').click({position:{x:3,y:3}});
+    ok(await welcomeDialog.count()===1,'popup onboarding tidak tertutup tanpa profil valid');
+    await welcomePage.locator('#profile-name').fill('Dira');await welcomePage.locator('[data-profile-character=\"bintang\"]').click();
+    ok(await welcomePage.locator('[data-profile-character=\"bintang\"]').getAttribute('aria-checked')==='true','pilihan karakter mengumumkan status terpilih');
+    await welcomePage.locator('#profile-form [type=\"submit\"]').click();await welcomeDialog.waitFor({state:'detached'});
+    ok(await welcomePage.evaluate(()=>state.name==='Dira'&&state.character==='bintang'&&state.profileSaved&&JSON.parse(localStorage.getItem(KEY)).character==='bintang'),'nama dan karakter tersimpan pada profil lokal');
+    await welcomePage.reload();await welcomePage.locator('.hero').waitFor();
+    ok(await welcomePage.locator('.profile-modal').count()===0,'popup tidak muncul lagi setelah profil valid disimpan');
+    await welcomePage.evaluate(()=>{state.levelProgress[1]=['addition','subtraction'];state.preScores={total:7,addition:{correct:2,total:2},subtraction:{correct:1,total:2},multiplication:{correct:1,total:2},division:{correct:1,total:2},fraction:{correct:2,total:2}};save()});
+    await welcomePage.locator('[data-page=\"profile\"]').first().click();await welcomePage.locator('[data-action=\"edit-profile\"]').click();
+    ok(await welcomePage.locator('.profile-modal').count()===1,'anak dapat membuka kembali popup untuk mengedit profil');
+    await welcomePage.locator('#profile-name').fill('Dira Baru');await welcomePage.locator('[data-profile-character=\"kupu\"]').click();await welcomePage.locator('#profile-form [type=\"submit\"]').click();
+    ok(await welcomePage.evaluate(()=>state.name==='Dira Baru'&&state.character==='kupu'&&state.levelProgress[1].length===2&&state.preScores.total===7),'edit profil mempertahankan progres dan nilai tes tersimpan');await welcome.close();
+
+    const legacyProfile=await newContext(browser),legacyProfilePage=await legacyProfile.newPage();legacyProfilePage.setDefaultTimeout(5000);legacyProfilePage.on('pageerror',e=>pageErrors.push(e.message));
+    await legacyProfilePage.addInitScript(()=>{const ids=['addition','subtraction','multiplication','division','fraction'];localStorage.setItem('congklatika.v1',JSON.stringify({page:'home',name:'Pemain Lama',activeLevel:3,levelProgress:{1:ids,2:ids,3:ids},preScores:{total:7,addition:100,subtraction:50,multiplication:50,division:50,fraction:100},postScores:{total:6,addition:50,subtraction:100,multiplication:50,division:50,fraction:50}}))});await goto(legacyProfilePage,url);
+    const migrated=await legacyProfilePage.evaluate(()=>({name:state.name,active:state.activeLevel,levels:[1,2,3].map(l=>state.levelProgress[l].length),unlocks:state.legacyUnlockedLevels.slice().sort(),pre:state.preScores.total,post:state.postScores.total,pct:totalProgress()}));
+    ok(migrated.name==='Pemain Lama'&&migrated.active===3&&migrated.levels.join('|')==='5|5|5'&&migrated.unlocks.join('|')==='2|3'&&migrated.pre===7&&migrated.post===6&&migrated.pct===83,'profil dan progres lama tetap terbaca; level lama tetap terbuka dan skor tes tidak berubah');
+    await legacyProfilePage.locator('[data-page=\"profile\"]').first().click();await legacyProfilePage.locator('[data-action=\"edit-profile\"]').click();await legacyProfilePage.locator('[data-profile-character=\"tunas\"]').click();await legacyProfilePage.locator('#profile-form [type=\"submit\"]').click();
+    ok(await legacyProfilePage.evaluate(()=>state.activeLevel===3&&state.levelProgress[1].length===5&&state.preScores.total===7&&state.postScores.total===6&&state.character==='tunas'),'mengedit profil lama tidak mereset progres, level aktif, atau nilai tes');await legacyProfile.close();
+
     const c=await newContext(browser),page=await c.newPage(); page.setDefaultTimeout(5000); page.on('pageerror',e=>pageErrors.push(e.message)); await goto(page,url);
     await nav(page,'learn'); await page.locator('[data-topic="division"]').click();
     ok(await page.evaluate(()=>document.activeElement.matches('h1[data-focus-key="page-heading"]')), 'fokus keyboard berpindah ke judul materi setelah kartu merender ulang');
@@ -168,6 +192,29 @@ async function answerCurrent(page, answerCorrect=true) {
     ok(await page.evaluate(()=>state.game.pits.reduce((a,b)=>a+b,0)===98&&!state.game.animating), 'refresh memulihkan papan valid dengan jumlah 98');
     await c.close();
 
+    const audio=await newContext(browser,{reducedMotion:'reduce'}),audioPage=await audio.newPage();audioPage.setDefaultTimeout(6000);audioPage.on('pageerror',e=>pageErrors.push(e.message));await goto(audioPage,url);await nav(audioPage,'play');
+    await audioPage.evaluate(()=>{window.__toneFrequencies=[];effects.on=true;effects.ctx={currentTime:0,destination:{},resume:()=>Promise.resolve(),createOscillator:()=>({frequency:{setValueAtTime:value=>window.__toneFrequencies.push(value)},connect(){},start(){},stop(){},disconnect(){}}),createGain:()=>({gain:{setValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){},disconnect(){}})}});
+    await audioPage.locator('[data-play-mode="learning"]').click();await audioPage.locator('[data-study-topic="addition"]').click();await audioPage.locator('[data-study-pit="0"]').click();
+    await audioPage.locator('[data-study-answer="0"]').click();
+    const wrongFeedback=await audioPage.evaluate(()=>({frequencies:window.__toneFrequencies.slice(),animation:getComputedStyle(document.querySelector('.study-question-modal')).animationName,className:document.querySelector('.study-question-modal').className}));
+    ok(wrongFeedback.frequencies.includes(330)&&wrongFeedback.frequencies.includes(294)&&wrongFeedback.className.includes('answer-wrong')&&wrongFeedback.animation==='none','jawaban salah memakai nada turun dan animasi lembut tunduk pada reduced-motion');
+    await audioPage.locator('.study-question-modal').waitFor({state:'detached'});await audioPage.locator('[data-study-pit="1"]').click();await audioPage.locator('[data-study-answer="1"]').click();
+    const rightFeedback=await audioPage.evaluate(()=>({frequencies:window.__toneFrequencies.slice(),className:document.querySelector('.study-question-modal')?.className||''}));
+    ok(rightFeedback.frequencies.includes(660)&&rightFeedback.frequencies.includes(880)&&rightFeedback.className.includes('answer-correct'),'jawaban benar memakai pasangan nada naik yang berbeda dari jawaban salah');
+    await audioPage.locator('.study-question-modal').waitFor({state:'detached'});await audioPage.locator('[data-sfx-toggle]').click();const mutedBefore=await audioPage.evaluate(()=>window.__toneFrequencies.length);await audioPage.locator('[data-study-pit="2"]').click();await audioPage.locator('[data-study-answer="1"]').click();await audioPage.locator('.study-question-modal').waitFor({state:'detached'});
+    ok(await audioPage.evaluate(n=>!effects.on&&window.__toneFrequencies.length===n,mutedBefore),'tombol efek suara membisukan feedback jawaban');await audio.close();
+
+    const outcomes=await newContext(browser,{reducedMotion:'reduce'}),outcomePage=await outcomes.newPage();outcomePage.setDefaultTimeout(7000);outcomePage.on('pageerror',e=>pageErrors.push(e.message));await goto(outcomePage,url);await nav(outcomePage,'play');
+    await outcomePage.evaluate(()=>{animateSeed=async(from,to)=>{state.game.pits[to]++;syncPit(to);return true};window.__toneFrequencies=[];effects.on=true;effects.ctx={currentTime:0,destination:{},resume:()=>Promise.resolve(),createOscillator:()=>({frequency:{setValueAtTime:value=>window.__toneFrequencies.push(value)},connect(){},start(){},stop(){},disconnect(){}}),createGain:()=>({gain:{setValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){},disconnect(){}})};const pits=Array(16).fill(0);pits[0]=90;pits[2]=1;pits[10]=3;pits[11]=4;state.game={...initialGame('two'),pits,turn:0,undoStack:[]};render();save()});
+    await outcomePage.locator('[data-pit="2"]').click();await outcomePage.waitForFunction(()=>state.game&&!state.game.animating&&state.game.pits[7]===5);await outcomePage.locator('#toast-region').getByText(/Tangkap! 5 biji/).waitFor();
+    const captured=await outcomePage.evaluate(()=>({sum:state.game.pits.reduce((a,b)=>a+b,0),opposite:state.game.pits[11],own:state.game.pits[3],store:state.game.pits[7],className:document.querySelector('[data-store="7"]')?.className,animation:getComputedStyle(document.querySelector('[data-store="7"]')).animationName,tones:window.__toneFrequencies.slice()}));
+    ok(captured.sum===98&&captured.opposite===0&&captured.own===0&&captured.store===5&&captured.className.includes('capture-pop')&&captured.animation==='none'&&captured.tones.includes(740)&&captured.tones.includes(990),'capture memakai outcome aktual, mempertahankan 98 biji, memberi animasi/bunyi lembut, dan menghormati reduced-motion');
+    await outcomePage.evaluate(()=>{const pits=Array(16).fill(0);pits[0]=92;pits[1]=1;pits[2]=2;pits[8]=3;state.game={...initialGame('two'),pits,turn:0,undoStack:[]};render();save()});await outcomePage.locator('[data-pit="1"]').click();await outcomePage.waitForFunction(()=>state.game&&!state.game.animating&&state.game.turn===1);await outcomePage.locator('#toast-region').getByText(/Kombo! Biji berantai 1 kali/).waitFor();
+    const combo=await outcomePage.evaluate(()=>({sum:state.game.pits.reduce((a,b)=>a+b,0),message:state.game.message,classes:document.querySelector('.board-shell')?.className,animation:getComputedStyle(document.querySelector('.board-shell')).animationName,tones:window.__toneFrequencies.slice()}));
+    ok(combo.sum===98&&combo.message.includes('Biji disebar lanjut 1 kali')&&combo.classes.includes('combo-glow')&&combo.animation==='none'&&combo.tones.includes(520)&&combo.tones.includes(700)&&combo.tones.includes(880),'relay/kombo dikenali dari langkah nyata, dinotifikasi, dianimasikan, berbunyi, dan tetap konservatif');
+    await outcomePage.evaluate(()=>{const pits=Array(16).fill(0);pits[0]=1;pits[6]=90;pits[8]=7;state.game={...initialGame('ai'),pits,turn:0,undoStack:[]};render();save()});await outcomePage.locator('[data-pit="0"]').click();await outcomePage.locator('#toast-region').getByText(/Giliran Buji!/).waitFor();await outcomePage.locator('#toast-region').getByText(/Buji mengambil \d+ biji dan mulai menabur/).waitFor({timeout:7000});await outcomePage.waitForFunction(()=>state.game&&!state.game.animating,{},{timeout:7000});
+    ok(await outcomePage.evaluate(()=>state.game.pits.reduce((a,b)=>a+b,0)===98),'giliran Buji menampilkan pemberitahuan saat mulai memilih dan mengambil biji tanpa mengubah total papan');await outcomes.close();
+
     const skip=await newContext(browser),skipPage=await skip.newPage();skipPage.setDefaultTimeout(5000);skipPage.on('pageerror',e=>pageErrors.push(e.message));await goto(skipPage,url);
     await skipPage.evaluate(()=>{state.levelProgress={1:topics.map(t=>t.id),2:topics.map(t=>t.id),3:topics.map(t=>t.id)};state.activeLevel=3;state.page='report';save();render()});
     ok((await skipPage.locator('.report-materials').innerText()).includes('Pretest awal dilewati') && (await skipPage.locator('.level-report li').count())===3, 'laporan tanpa pretest tetap menampilkan progres materi per level');
@@ -177,6 +224,8 @@ async function answerCurrent(page, answerCorrect=true) {
       const mc=await newContext(browser,{viewport:{width,height:800},isMobile:true,hasTouch:true}),mp=await mc.newPage();mp.setDefaultTimeout(5000);mp.on('pageerror',e=>pageErrors.push(e.message));await goto(mp,url);
       const before=await mp.evaluate(()=>({overflow:document.documentElement.scrollWidth-innerWidth,header:[...document.querySelectorAll('.site-header>* , .header-actions>*')].filter(e=>getComputedStyle(e).display!=='none').map(e=>{const r=e.getBoundingClientRect();return [r.left,r.right]} )}));
       ok(before.overflow===0&&before.header.every(([l,r])=>l>=-1&&r<=width+1), `${width}px: header muat dan tidak ada overflow horizontal`);
+      const missionLayout=await mp.evaluate(()=>{const n=document.querySelector('.mission-note'),h=document.querySelector('.hero .display'),b=[...document.querySelectorAll('.hero .hero-actions button')],nr=n.getBoundingClientRect(),hr=h.getBoundingClientRect();return {present:!!n,legacy:!!document.querySelector('.seed-bubble'),touchesTitle:!(nr.bottom<hr.top||nr.top>hr.bottom),touchesButton:b.some(x=>{const r=x.getBoundingClientRect();return !(nr.right<r.left||nr.left>r.right||nr.bottom<r.top||nr.top>r.bottom)})}});
+      ok(missionLayout.present&&!missionLayout.legacy&&!missionLayout.touchesTitle&&!missionLayout.touchesButton, `${width}px: pesan misi tetap terbaca tanpa menutupi judul atau tombol`);
        await mp.locator('#menu-toggle').click(); await mp.locator('.nav-link[data-page="play"]').click();
        const layout=await mp.evaluate(()=>{const r=document.querySelector('.board-shell').getBoundingClientRect();return {overflow:document.documentElement.scrollWidth-innerWidth,left:r.left,right:r.right,pit:document.querySelector('[data-pit]').getBoundingClientRect().width}});
        ok(layout.overflow===0&&layout.left>=-1&&layout.right<=width+1&&layout.pit>=31, `${width}px: papan dan target lubang tetap terlihat serta dapat disentuh`);
@@ -195,17 +244,14 @@ async function answerCurrent(page, answerCorrect=true) {
     const quota=await newContext(browser),quotaPage=await quota.newPage();quotaPage.setDefaultTimeout(5000);quotaPage.on('pageerror',e=>pageErrors.push(e.message));await quotaPage.addInitScript(()=>Object.defineProperty(Storage.prototype,'setItem',{value(){throw new DOMException('quota','QuotaExceededError')}}));await goto(quotaPage,url);await nav(quotaPage,'learn');
     ok(await quotaPage.locator('.topic-grid').count()===1&&await quotaPage.getByText(/Penyimpanan browser tidak tersedia/).count()===1, 'kegagalan/kuota localStorage menampilkan peringatan tanpa menghentikan belajar');await quota.close();
 
-    const profile=await newContext(browser,{acceptDownloads:true}),profilePage=await profile.newPage();profilePage.setDefaultTimeout(5000);profilePage.on('pageerror',e=>pageErrors.push(e.message));await goto(profilePage,url);
-    await profilePage.locator('[data-action="login"]').click();
-    ok(await profilePage.locator('[data-action="skip-profile"]').count()===1, 'profil baru menjelaskan bahwa nama boleh dilewati');
-    await profilePage.locator('[data-action="skip-profile"]').click();
-    ok(await profilePage.evaluate(()=>state.page==='home'&&state.name===''&&!state.profileSaved), 'belajar dapat dimulai tanpa membuat profil bernama');
-    await profilePage.locator('[data-action="login"]').click();
-    const [download]=await Promise.all([profilePage.waitForEvent('download'),profilePage.locator('[data-action="export-data"]').click()]);
+    const profile=await newContext(browser,{acceptDownloads:true}),profilePage=await profile.newPage();profilePage.setDefaultTimeout(5000);profilePage.on('pageerror',e=>pageErrors.push(e.message));await goto(profilePage,url,{onboard:false});
+    await profilePage.locator('#profile-name').fill('Ayu');await profilePage.locator('[data-profile-character=\"buji\"]').click();await profilePage.locator('#profile-form [type=\"submit\"]').click();
+    await profilePage.locator('[data-page=\"profile\"]').first().click();
+    const [download]=await Promise.all([profilePage.waitForEvent('download'),profilePage.locator('[data-action=\"export-data\"]').click()]);
     ok(download.suggestedFilename()==='congklatika-data.json', 'profil menyediakan ekspor salinan data lokal');
     let resetConfirmed=false;profilePage.on('dialog',async d=>{resetConfirmed=d.type()==='confirm';await d.accept()});
-    await profilePage.locator('[data-action="reset-data"]').click();await profilePage.waitForFunction(()=>state.page==='home');
-    ok(resetConfirmed&&await profilePage.evaluate(()=>state.name===''&&totalProgress()===0&&state.game===null), 'reset mengonfirmasi penghapusan profil, progres, dan permainan lokal');await profile.close();
+    await profilePage.locator('[data-action=\"reset-data\"]').click();await profilePage.waitForFunction(()=>state.page==='home');
+    ok(resetConfirmed&&await profilePage.evaluate(()=>state.name===''&&totalProgress()===0&&state.game===null)&&await profilePage.locator('.profile-modal').count()===1, 'reset menghapus data setelah konfirmasi lalu meminta profil baru');await profile.close();
 
     const late=await newContext(browser),latePage=await late.newPage();latePage.setDefaultTimeout(5000);latePage.on('pageerror',e=>pageErrors.push(e.message));await goto(latePage,url);
     await latePage.evaluate(()=>{state.levelProgress={1:topics.map(t=>t.id),2:topics.map(t=>t.id),3:topics.map(t=>t.id)};state.activeLevel=3;save();render()});await nav(latePage,'learn');

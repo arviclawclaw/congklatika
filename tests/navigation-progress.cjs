@@ -16,7 +16,7 @@ const server = http.createServer((req, res) => {
   fs.readFile(file, (error, data) => { if (error) { res.writeHead(404).end('Not found'); return; } res.writeHead(200, {'content-type':mime(file),'cache-control':'no-store'}).end(data); });
 });
 async function startServer() { await new Promise(resolve => server.listen(0, '127.0.0.1', resolve)); return `http://127.0.0.1:${server.address().port}/`; }
-async function goto(page, url) { await page.goto(url, {waitUntil:'domcontentloaded'}); await page.locator('#app').waitFor(); }
+async function goto(page, url) { await page.goto(url, {waitUntil:'domcontentloaded'}); await page.locator('#app').waitFor(); if(await page.locator('.profile-modal').count()){await page.locator('#profile-name').fill('Teman');await page.locator('[data-profile-character=\"buji\"]').click();await page.locator('#profile-form [type=\"submit\"]').click();await page.locator('.profile-modal').waitFor({state:'detached'})} }
 async function navClick(page, route) { await page.locator(`[data-bottom-route="${route}"]`).click(); }
 (async()=>{
   const url = await startServer();
@@ -31,15 +31,15 @@ async function navClick(page, route) { await page.locator(`[data-bottom-route="$
     await goto(page, url);
     ok(await page.locator('.bottom-nav').isHidden(), 'desktop: navigasi bawah tidak menggantikan navigasi desktop');
     await page.locator('.nav-link[data-page="learn"]').click();
-    const topics = ['addition','subtraction','multiplication','division','fraction'];
+    const topics = ['addition','subtraction','multiplication','division','fraction','number-pattern'];
     for (const level of [1,2,3]) {
       for (let i=0; i<topics.length; i++) {
         const id = topics[i];
         await page.evaluate(({id,level})=>{state.page='learn';state.activeLevel=level;state.activeTopic=id;render()}, {id,level});
         const bar = page.locator(`[data-material-progress="${id}"] [role="progressbar"]`);
-        ok(Number(await bar.getAttribute('aria-valuenow'))===i+1 && Number(await bar.getAttribute('aria-valuemax'))===5, `level ${level}: progress ${id} menunjuk materi ${i+1} dari 5`);
-        ok((await bar.getAttribute('aria-valuetext'))===`Materi ${i+1} dari 5, Level ${level}`, `level ${level}: pembaca layar mendapat posisi materi ${id}`);
-        ok((await page.locator(`[data-material-progress="${id}"]`).innerText()).includes(`Materi ${i+1} dari 5 · Level ${level}`), `level ${level}: label visual materi ${id} mengikuti level aktif`);
+        ok(Number(await bar.getAttribute('aria-valuenow'))===i+1 && Number(await bar.getAttribute('aria-valuemax'))===6, `level ${level}: progress ${id} menunjuk materi ${i+1} dari 6`);
+        ok((await bar.getAttribute('aria-valuetext'))===`Materi ${i+1} dari 6, Level ${level}`, `level ${level}: pembaca layar mendapat posisi materi ${id}`);
+        ok((await page.locator(`[data-material-progress="${id}"]`).innerText()).includes(`Materi ${i+1} dari 6 · Level ${level}`), `level ${level}: label visual materi ${id} mengikuti level aktif`);
       }
     }
 

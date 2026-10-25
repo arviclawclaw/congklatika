@@ -360,3 +360,56 @@ button:disabled{opacity:.72}
   .study-progress-icon{width:40px;height:40px;font-size:21px}
 }
 @media(prefers-reduced-motion:reduce){.themed-modal{animation:none}}
+
+
+/* Inline home mission note: stays in document flow instead of covering hero controls. */
+.mission-note{display:flex;align-items:center;gap:7px;width:fit-content;max-width:100%;margin:16px 0 0;padding:8px 12px;border:1px solid #efdfb4;border-radius:14px;background:#fff9e8;color:#654d1e;font-size:13px;font-weight:900;line-height:1.4;box-shadow:0 5px 14px rgba(69,53,23,.08)}
+
+/* First-visit and edit-profile dialog. */
+.profile-modal{text-align:left;width:min(600px,100%)}
+.profile-modal .themed-modal-art{margin-left:auto;margin-right:auto}
+.profile-modal .eyebrow{display:table;margin:0 auto;text-align:center}
+.profile-modal h2,.profile-modal>p{text-align:center}
+.profile-modal .profile-form{margin-top:20px}
+.profile-modal .form-field{display:grid;gap:7px;color:#294b3a;font-weight:900}
+.profile-modal .form-field input{width:100%;min-height:48px;padding:11px 13px;border:1px solid #d4dfd0;border-radius:13px;background:#fff;color:#20362e;font:700 16px var(--body)}
+.profile-modal .form-field input:focus-visible{outline:3px solid #77a77d;outline-offset:2px}
+.profile-character-fieldset{min-width:0;margin:17px 0 0;padding:0;border:0}
+.profile-character-fieldset legend{margin-bottom:9px;color:#294b3a;font-weight:900}
+.profile-character-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.profile-character-option{display:grid;place-items:center;gap:4px;min-width:0;min-height:88px;padding:8px 5px;border:1.5px solid #dbe4d7;border-radius:16px;background:#fffdf8;color:#315a45;cursor:pointer;transition:transform .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease}
+.profile-character-option span{font-size:30px;line-height:1.15}
+.profile-character-option b{font-size:12px;line-height:1.2;text-align:center}
+.profile-character-option:hover{transform:translateY(-2px);border-color:#8db193}
+.profile-character-option.selected{border-color:#438564;background:#e7f3e4;box-shadow:inset 0 0 0 1px #438564,0 4px 10px rgba(56,103,73,.1)}
+.profile-character-option:focus-visible{outline:3px solid #dfaa3c;outline-offset:2px}
+.profile-modal .themed-modal-actions{grid-template-columns:1fr 1fr;margin-top:18px}
+.profile-form-error{margin:0;color:#a54235;font-weight:900}
+.profile-local-note{margin-top:13px!important;font-size:12px!important}
+.profile-card .divider{height:1px;margin:18px 0;background:#e8e7dd}
+.profile-data-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+
+/* Quick, friendly feedback on correct/incorrect learning answers and game outcomes. */
+@keyframes answer-correct-pop{0%{transform:scale(1)}45%{transform:scale(1.025)}100%{transform:scale(1)}}
+@keyframes answer-wrong-nudge{0%,100%{transform:translateX(0)}30%{transform:translateX(-3px)}65%{transform:translateX(3px)}}
+@keyframes capture-burst{0%{transform:scale(1);filter:brightness(1)}42%{transform:scale(1.09);filter:brightness(1.18);box-shadow:0 0 0 9px rgba(248,208,102,.35),0 0 26px rgba(248,208,102,.55)}100%{transform:scale(1);filter:brightness(1)}}
+@keyframes combo-pulse{0%{box-shadow:0 18px 35px #49341f30}35%{box-shadow:0 0 0 7px rgba(255,218,112,.45),0 0 32px rgba(255,226,140,.72),0 18px 35px #49341f30}100%{box-shadow:0 18px 35px #49341f30}}
+.mini-question.answer-correct,.study-question-modal.answer-correct{animation:answer-correct-pop .42s ease-out}
+.mini-question.answer-wrong,.study-question-modal.answer-wrong{animation:answer-wrong-nudge .32s ease-out}
+.store-pit.capture-pop{position:relative;z-index:2;animation:capture-burst .68s ease-out}
+.board-shell.combo-glow{animation:combo-pulse .82s ease-out}
+
+@media(max-width:520px){
+  .mission-note{margin-top:13px;padding:7px 10px;font-size:12px}
+  .profile-modal{max-height:90dvh;padding:20px 16px}
+  .profile-character-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .profile-character-option{min-height:70px;grid-template-columns:38px 1fr;text-align:left;justify-items:start;padding:8px 11px}
+  .profile-character-option span{font-size:27px}
+  .profile-character-option b{text-align:left;font-size:13px}
+  .profile-modal .themed-modal-actions{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+  .profile-character-option{transition:none}
+  .profile-character-option:hover{transform:none}
+  .mini-question.answer-correct,.study-question-modal.answer-correct,.mini-question.answer-wrong,.study-question-modal.answer-wrong,.store-pit.capture-pop,.board-shell.combo-glow{animation:none!important}
+}

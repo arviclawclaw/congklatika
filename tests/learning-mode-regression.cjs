@@ -18,7 +18,7 @@ const server = http.createServer((req, res) => {
 async function listen() { await new Promise(resolve => server.listen(0, '127.0.0.1', resolve)); return `http://127.0.0.1:${server.address().port}/`; }
 async function pageAt(browser, url, options={}) {
   const context = await browser.newContext({viewport:{width:1280,height:900},...options});
-  const page = await context.newPage(); page.setDefaultTimeout(7000); await page.goto(url,{waitUntil:'domcontentloaded'}); await page.locator('#app').waitFor(); return {context,page};
+  const page = await context.newPage(); page.setDefaultTimeout(7000); await page.goto(url,{waitUntil:'domcontentloaded'}); await page.locator('#app').waitFor(); if(await page.locator('.profile-modal').count()){await page.locator('#profile-name').fill('Teman');await page.locator('[data-profile-character=\"buji\"]').click();await page.locator('#profile-form [type=\"submit\"]').click();await page.locator('.profile-modal').waitFor({state:'detached'})} return {context,page};
 }
 (async()=>{
   const url=await listen();
@@ -33,14 +33,14 @@ async function pageAt(browser, url, options={}) {
     const completion=await page.locator('[data-topic="fraction"]').evaluate(el=>({decorative:el.querySelectorAll('.completion-mark').length,status:el.querySelector('.topic-status.done')?.textContent||'',check:getComputedStyle(el.querySelector('.topic-status.done'),':before').content}));
     ok(completion.decorative===0&&completion.status.includes('Selesai di level ini')&&completion.check.replace(/["']/g,'')==='✓'&&(completion.status.match(/✓/g)||[]).length===0,'status materi selesai menampilkan tepat satu tanda centang');
 
-    for(const level of [1,2,3]) for(const topic of ['addition','subtraction','multiplication','division','fraction']) {
+    for(const level of [1,2,3]) for(const topic of ['addition','subtraction','multiplication','division','fraction','number-pattern']) {
       await page.evaluate(({level,topic})=>{state.page='learn';state.activeLevel=level;state.activeTopic=topic;render()}, {level,topic});
       const guide=await page.locator('.lesson-guide').innerText();
       const example=await page.locator('.worked-example').innerText();
       const diagram=await page.locator('.question-illustration').evaluate(el=>({label:el.querySelector('.question-illustration-heading .eyebrow')?.textContent||'',pits:el.querySelectorAll('.question-pit').length,rows:[...el.querySelectorAll('.question-pit-row')].map(row=>row.querySelectorAll('.question-pit').length),stores:el.querySelectorAll('.question-board-store').length,alt:el.querySelector('.question-board')?.getAttribute('aria-label')||''}));
-      ok(guide.includes('Dari benda ke simbol')&&guide.includes('Ringkasan')&&guide.includes('Hubungkan dengan congklak')&&await page.locator('.lesson-guide-bridge li').count()===3,`${topic} Level ${level}: panduan berisi konsep, langkah, rangkuman, dan kaitan papan`);
+      ok((topic==='number-pattern'?guide.toLowerCase().includes('selisih'):guide.includes('Dari benda ke simbol'))&&guide.includes('Ringkasan')&&guide.includes('Hubungkan dengan congklak')&&await page.locator('.lesson-guide-bridge li').count()===3,`${topic} Level ${level}: panduan berisi konsep, langkah, rangkuman, dan kaitan papan`);
       ok(example.includes('Contoh terpecahkan')&&await page.locator('.worked-example ol li').count()===3,`${topic} Level ${level}: contoh terpecahkan tersedia`);
-      ok(diagram.label.toLowerCase().includes(topic==='addition'?'penjumlahan':topic==='subtraction'?'pengurangan':topic==='multiplication'?'perkalian':topic==='division'?'pembagian':'pecahan')&&diagram.pits===14&&diagram.rows.join('|')==='7|7'&&diagram.stores===2&&diagram.alt.includes('14 lubang kecil'),`${topic} Level ${level}: label sesuai operasi dan diagram berpola 14+2`);
+      ok(diagram.label.toLowerCase().includes(topic==='addition'?'penjumlahan':topic==='subtraction'?'pengurangan':topic==='multiplication'?'perkalian':topic==='division'?'pembagian':topic==='fraction'?'pecahan':'pola bilangan')&&diagram.pits===14&&diagram.rows.join('|')==='7|7'&&diagram.stores===2&&diagram.alt.includes('14 lubang kecil'),`${topic} Level ${level}: label sesuai operasi dan diagram berpola 14+2`);
     }
     const maxMaterialNumber=await page.evaluate(()=>{
       const text=JSON.stringify({lessonGuides,levelChallenges,quizBanks,quizExtras});
@@ -71,7 +71,7 @@ async function pageAt(browser, url, options={}) {
     const rightResult=await page.evaluate(()=>({right:studyRound.pits[7],left:studyRound.pits[15],pit:studyRound.pits[1],selected:studyRound.selected[1],count:studyRound.answered,total:studyRound.pits.reduce((a,b)=>a+b,0)}));
     ok(rightResult.right===second.count&&rightResult.left===first.count&&rightResult.pit===0&&rightResult.selected&&rightResult.count===2&&rightResult.total===98,'jawaban benar masuk ke lumbung pemain kanan dan biji tetap terhitung tepat');
 
-    const operations=[['subtraction','Pindahkan'],['multiplication','lubang memiliki isi sama'],['division','dibagikan rata'],['fraction','pecahan apa']];
+    const operations=[['subtraction','Pindahkan'],['multiplication','lubang memiliki isi sama'],['division','dibagikan rata'],['fraction','pecahan apa'],['number-pattern','Pola biji bertambah 2']];
     const used=new Set([0,1]);
     for(const [operationIndex,[topic,phrase]] of operations.entries()){
       await page.locator(`[data-study-topic="${topic}"]`).click();
@@ -84,7 +84,7 @@ async function pageAt(browser, url, options={}) {
       const after=await page.evaluate(i=>({right:studyRound.pits[7],left:studyRound.pits[15],pit:studyRound.pits[i],selected:studyRound.selected[i],total:studyRound.pits.reduce((a,b)=>a+b,0)}),pitIndex);
       ok(after.right===before.right+before.count&&after.left===before.left&&after.pit===0&&after.selected&&after.total===98,`${topic}: feedback singkat lalu biji dipindahkan tanpa kehilangan hitungan`);
     }
-    for(const pitIndex of [2,3,4,5,6,8,13,14]){
+    for(const pitIndex of [2,3,4,5,6,8,14]){
       await page.locator(`[data-study-pit="${pitIndex}"]`).click();
       const pick=await page.evaluate(i=>({count:studyRound.pits[i],answer:studyQuestion.answer,round:studyRound.answered}),pitIndex);
       const correct=pick.round%2===0,answer=correct?pick.answer:(pick.answer===0?1:0);
@@ -110,7 +110,7 @@ async function pageAt(browser, url, options={}) {
     for(const width of [320,360,390]){
       const {context:mobileContext,page:mobile}=await pageAt(browser,url,{viewport:{width,height:840},isMobile:true,hasTouch:true});mobile.on('pageerror',e=>errors.push(e.message));
       await mobile.locator('.bottom-nav [data-bottom-route="learn"]').click();
-      const diagrams=await mobile.evaluate(topics=>topics.map(topic=>{state.activeLevel=3;state.activeTopic=topic;render();const el=document.querySelector('.question-illustration'),r=el.getBoundingClientRect();return {topic,overflow:document.documentElement.scrollWidth-innerWidth,left:r.left,right:r.right,pits:el.querySelectorAll('.question-pit').length}}),['addition','subtraction','multiplication','division','fraction']);
+      const diagrams=await mobile.evaluate(topics=>topics.map(topic=>{state.activeLevel=3;state.activeTopic=topic;render();const el=document.querySelector('.question-illustration'),r=el.getBoundingClientRect();return {topic,overflow:document.documentElement.scrollWidth-innerWidth,left:r.left,right:r.right,pits:el.querySelectorAll('.question-pit').length}}),['addition','subtraction','multiplication','division','fraction','number-pattern']);
       ok(diagrams.every(x=>x.overflow===0&&x.left>=-1&&x.right<=width+1&&x.pits===14),`${width}px: semua ilustrasi mini 14 lubang muat tanpa overflow`);
       await mobile.locator('.bottom-nav [data-bottom-route="play"]').click();
       const traditional=await mobile.evaluate(()=>({overflow:document.documentElement.scrollWidth-innerWidth,board:document.querySelector('.board-shell').getBoundingClientRect(),pit:document.querySelector('[data-pit]').getBoundingClientRect().width}));
