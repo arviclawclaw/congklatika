@@ -10,18 +10,53 @@ const topics = [
   {id:'fraction',name:'Pecahan',icon:'½',tag:'Bagian dari satu utuh',desc:'Lihat bagian yang sama besar.',lesson:'Pecahan menunjukkan bagian dari satu benda utuh. Pada ½, angka di bawah menunjukkan berapa bagian sama besar. Angka di atas menunjukkan berapa bagian yang kita ambil.',example:'Satu kue dipotong menjadi 4 bagian sama besar. Satu potong dari kue itu ditulis ¼.',tip:'Bagian-bagiannya harus sama besar supaya adil.'}
 ];
 
-const quizQuestions = [
-  {cat:'addition',q:'Di lubang congklak ada 4 biji. Buji menambah 3 biji. Berapa jumlahnya?',options:['6 biji','7 biji','8 biji'],answer:1},
-  {cat:'addition',q:'8 + 5 = ...',options:['12','13','14'],answer:1},
-  {cat:'subtraction',q:'Ada 9 biji. 4 biji dipindahkan. Berapa sisanya?',options:['4 biji','5 biji','6 biji'],answer:1},
-  {cat:'subtraction',q:'23 − 8 = ...',options:['13','15','17'],answer:1},
-  {cat:'multiplication',q:'Ada 3 lubang, masing-masing berisi 4 biji. Berapa semua bijinya?',options:['7','10','12'],answer:2},
-  {cat:'multiplication',q:'9 × 8 = ...',options:['63','72','81'],answer:1},
-  {cat:'division',q:'12 biji dibagi rata ke 3 lubang. Tiap lubang mendapat ...',options:['3 biji','4 biji','5 biji'],answer:1},
-  {cat:'division',q:'72 ÷ 8 = ...',options:['8','9','10'],answer:1},
-  {cat:'fraction',q:'Satu benda dibagi menjadi 4 bagian sama besar. Satu bagian ditulis ...',options:['¼','⅓','½'],answer:0},
-  {cat:'fraction',q:'Pada pecahan ⅔, angka 3 menunjukkan ...',options:['Bagian yang diambil','Jumlah seluruh bagian sama besar','Jumlah benda utuh'],answer:1}
-];
+const quizBanks = {
+  pre: {
+    addition: [
+      {cat:'addition',q:'Di lubang ada 4 biji. Buji menambah 3 biji. Berapa jumlahnya?',options:['6 biji','7 biji','8 biji'],answer:1},
+      {cat:'addition',q:'8 + 5 = ...',options:['12','13','14'],answer:1}
+    ],
+    subtraction: [
+      {cat:'subtraction',q:'Ada 9 biji. 4 biji dipindahkan. Berapa sisanya?',options:['4 biji','5 biji','6 biji'],answer:1},
+      {cat:'subtraction',q:'23 − 8 = ...',options:['13','15','17'],answer:1}
+    ],
+    multiplication: [
+      {cat:'multiplication',q:'Ada 3 lubang, masing-masing berisi 4 biji. Berapa semua bijinya?',options:['7','10','12'],answer:2},
+      {cat:'multiplication',q:'9 × 8 = ...',options:['63','72','81'],answer:1}
+    ],
+    division: [
+      {cat:'division',q:'12 biji dibagi rata ke 3 lubang. Tiap lubang mendapat ...',options:['3 biji','4 biji','5 biji'],answer:1},
+      {cat:'division',q:'72 ÷ 8 = ...',options:['8','9','10'],answer:1}
+    ],
+    fraction: [
+      {cat:'fraction',q:'Satu benda dibagi menjadi 4 bagian sama besar. Satu bagian ditulis ...',options:['¼','⅓','½'],answer:0},
+      {cat:'fraction',q:'Pada pecahan ⅔, angka 3 menunjukkan ...',options:['Bagian yang diambil','Jumlah seluruh bagian sama besar','Jumlah benda utuh'],answer:1}
+    ]
+  },
+  post: {
+    addition: [
+      {cat:'addition',q:'Ada 5 biji di satu lubang dan 4 biji lagi di lubang lain. Berapa semuanya?',options:['8 biji','9 biji','10 biji'],answer:1},
+      {cat:'addition',q:'9 + 6 = ...',options:['14','15','16'],answer:1}
+    ],
+    subtraction: [
+      {cat:'subtraction',q:'Buji punya 10 biji. 3 biji dipindahkan. Berapa yang tersisa?',options:['6 biji','7 biji','8 biji'],answer:1},
+      {cat:'subtraction',q:'25 − 9 = ...',options:['14','16','17'],answer:1}
+    ],
+    multiplication: [
+      {cat:'multiplication',q:'Ada 4 kelompok. Setiap kelompok berisi 3 biji. Berapa semuanya?',options:['7','12','14'],answer:1},
+      {cat:'multiplication',q:'7 × 8 = ...',options:['54','56','64'],answer:1}
+    ],
+    division: [
+      {cat:'division',q:'16 biji dibagikan sama rata ke 4 lubang. Tiap lubang mendapat ...',options:['3 biji','4 biji','5 biji'],answer:1},
+      {cat:'division',q:'63 ÷ 7 = ...',options:['8','9','10'],answer:1}
+    ],
+    fraction: [
+      {cat:'fraction',q:'Satu kue dipotong menjadi 3 bagian sama besar. Satu bagian ditulis ...',options:['⅓','½','⅔'],answer:0},
+      {cat:'fraction',q:'Pada pecahan ¾, angka 4 menunjukkan ...',options:['Bagian yang diambil','Jumlah seluruh bagian sama besar','Jumlah kue'],answer:1}
+    ]
+  }
+};
+function quizQuestionsFor(kind=quiz.kind){const bank=quizBanks[kind==='post'?'post':'pre'];return topics.flatMap(t=>bank[t.id])}
 
 const levelChallenges = {
   addition:[['4 + 3 = …',['6','7','8'],1],['27 + 18 = …',['35','45','55'],1],['56 + 37 = …',['83','93','97'],1]],
@@ -35,12 +70,14 @@ const challengeHints={addition:['Mulai dari 4, lalu hitung maju tiga langkah.','
 const emptyLevelProgress=()=>({1:[],2:[],3:[]});
 const defaultState={page:'home',name:'',profileSaved:false,activeLevel:1,preScores:null,postScores:null,levelProgress:emptyLevelProgress(),practice:{},game:null};
 let state=loadState();
-let quiz={kind:null,index:0,answers:Array(quizQuestions.length).fill(null)};
+let quiz={kind:null,index:0,answers:[]};
+let visualModel={multiplication:{groups:3,seeds:4},division:{groups:3,total:12},fraction:{parts:4,selected:1}};
 let practiceAnswered={};
 let music={on:false,ctx:null,timer:null,step:0};
 let speechVoice=null;
 let narrationRequest=0;
 
+function cleanUndoStack(value){if(!Array.isArray(value))return [];return value.slice(-40).filter(item=>item&&Array.isArray(item.pits)&&item.pits.length===16&&item.pits.every(n=>Number.isInteger(n)&&n>=0)&&item.pits.reduce((a,b)=>a+b,0)===98&&[0,1].includes(item.turn)).map(item=>({pits:item.pits.slice(),turn:item.turn,over:Boolean(item.over),message:String(item.message||'')}))}
 function loadState(){
   try{
     const saved=JSON.parse(localStorage.getItem(KEY)||'{}');
@@ -66,7 +103,7 @@ function loadState(){
     const highest=clean[1].length===topics.length?(clean[2].length===topics.length?3:2):1;
     next.activeLevel=Math.min(next.activeLevel,highest);
     const g=saved.game;
-    next.game=g&&Array.isArray(g.pits)&&g.pits.length===16&&g.pits.every(n=>Number.isInteger(n)&&n>=0)&&g.pits.reduce((a,b)=>a+b,0)===98&&[0,1].includes(g.turn)?{...g,mode:g.mode==='ai'?'ai':'two',animating:false,aiThinking:false}:null;
+    next.game=g&&Array.isArray(g.pits)&&g.pits.length===16&&g.pits.every(n=>Number.isInteger(n)&&n>=0)&&g.pits.reduce((a,b)=>a+b,0)===98&&[0,1].includes(g.turn)?{...g,mode:g.mode==='ai'?'ai':'two',animating:false,aiThinking:false,undoStack:cleanUndoStack(g.undoStack)}:null;
     delete next.grade;delete next.gradeDone;delete next.learned;
     if(!next.profileSaved&&next.page==='profile')next.page='home';
     if(next.page==='quiz')next.page='home';
@@ -90,8 +127,8 @@ function setPage(page){
 }
 function toast(message){const box=$('#toast-region');const el=document.createElement('div');el.className='toast';el.textContent=message;box.append(el);setTimeout(()=>el.remove(),2800)}
 function popConfetti(){const colors=['#eab348','#62a46f','#e07758','#6a9fc0','#f4d67b'];for(let i=0;i<42;i++){const p=document.createElement('i');p.className='confetti';p.style.left=Math.random()*100+'vw';p.style.background=colors[i%colors.length];p.style.animationDelay=(Math.random()*.45)+'s';p.style.transform=`rotate(${Math.random()*180}deg)`;document.body.append(p);setTimeout(()=>p.remove(),2100)}}
-function startPretest(){if(!state.preScores&&totalProgress()>0){toast('Pretest awal sebaiknya sebelum belajar. Tidak apa-apa—kamu tetap bisa lanjut tanpa membandingkan nilai!');setPage('learn');return}quiz={kind:'pre',index:0,answers:Array(quizQuestions.length).fill(null)};setPage('quiz')}
-function startPosttest(){if(!state.preScores){toast('Posttest hanya untuk membandingkan hasil. Karena pretest awal dilewati, kamu boleh lanjut belajar tanpa tes akhir.');return}if(!allLevelsDone()){toast('Selesaikan semua materi di ketiga level dulu, ya!');setPage('learn');return}quiz={kind:'post',index:0,answers:Array(quizQuestions.length).fill(null)};setPage('quiz')}
+function startPretest(){if(!state.preScores&&totalProgress()>0){toast('Pretest awal sebaiknya sebelum belajar. Tidak apa-apa—kamu tetap bisa lanjut tanpa membandingkan nilai!');setPage('learn');return}quiz={kind:'pre',index:0,answers:Array(quizQuestionsFor('pre').length).fill(null)};setPage('quiz')}
+function startPosttest(){if(!state.preScores){toast('Posttest hanya untuk membandingkan hasil. Karena pretest awal dilewati, kamu boleh lanjut belajar tanpa tes akhir.');return}if(!allLevelsDone()){toast('Selesaikan semua materi di ketiga level dulu, ya!');setPage('learn');return}quiz={kind:'post',index:0,answers:Array(quizQuestionsFor('post').length).fill(null)};setPage('quiz')}
 function beginJourney(){setPage('learn')}
 function totalProgress(){const total=[1,2,3].reduce((n,l)=>n+(state.levelProgress[l]||[]).length,0);return Math.round(total/(topics.length*3)*100)}
 function bujiCard(message='Hai, teman! Aku Buji. Yuk, belajar sedikit demi sedikit dan jangan takut mencoba!'){return `<div class="buji-card"><img src="./buji-avatar.webp" alt="Buji, pemandu CongklaTika"><div class="buji-bubble"><b>Buji berbisik:</b> ${message}</div></div>`}
@@ -120,19 +157,50 @@ function renderLearn(){
   }
   return html+'</div>';
 }
+function visualStepper(topic,key,value,label,min,max){return `<div class="visual-control"><span>${label}</span><div><button class="stepper-button" data-visual-topic="${topic}" data-visual-key="${key}" data-step="-1" ${value<=min?'disabled':''} aria-label="Kurangi ${label.toLowerCase()}">−</button><strong>${value}</strong><button class="stepper-button" data-visual-topic="${topic}" data-visual-key="${key}" data-step="1" ${value>=max?'disabled':''} aria-label="Tambah ${label.toLowerCase()}">+</button></div></div>`}
+function seedDots(count){return Array.from({length:count},()=>'<i aria-hidden="true">●</i>').join('')}
+function renderVisualPractice(t){
+  const m=visualModel[t.id];if(!m)return '';
+  let title='',controls='',picture='',equation='';
+  if(t.id==='multiplication'){
+    title='Buat kelompok biji yang sama banyak';
+    controls=visualStepper(t.id,'groups',m.groups,'Kelompok',2,5)+visualStepper(t.id,'seeds',m.seeds,'Biji tiap kelompok',1,6);
+    picture=`<div class="visual-groups">${Array.from({length:m.groups},(_,i)=>`<div class="visual-group" aria-label="Kelompok ${i+1}, ${m.seeds} biji"><span>${seedDots(m.seeds)}</span></div>`).join('')}</div>`;
+    equation=`${m.groups} kelompok × ${m.seeds} biji = <strong>${m.groups*m.seeds} biji</strong>`;
+  }else if(t.id==='division'){
+    const each=m.total/m.groups;
+    title='Bagikan biji sama rata';
+    controls=`<div class="visual-control"><span>Lubang tujuan</span><div><button class="stepper-button" data-visual-topic="division" data-visual-key="groups" data-step="-1" aria-label="Kurangi jumlah lubang">−</button><strong>${m.groups}</strong><button class="stepper-button" data-visual-topic="division" data-visual-key="groups" data-step="1" aria-label="Tambah jumlah lubang">+</button></div></div><span class="visual-note">Jumlah biji tetap ${m.total}</span>`;
+    picture=`<div class="visual-groups">${Array.from({length:m.groups},(_,i)=>`<div class="visual-group" aria-label="Lubang ${i+1}, ${each} biji"><span>${seedDots(each)}</span></div>`).join('')}</div>`;
+    equation=`${m.total} biji ÷ ${m.groups} lubang = <strong>${each} biji tiap lubang</strong>`;
+  }else{
+    title='Lihat bagian dari satu utuh';
+    controls=visualStepper(t.id,'parts',m.parts,'Bagian sama besar',2,4)+visualStepper(t.id,'selected',m.selected,'Bagian yang diambil',1,m.parts);
+    picture=`<div class="fraction-bar" role="img" aria-label="${m.selected} dari ${m.parts} bagian diwarnai">${Array.from({length:m.parts},(_,i)=>`<span class="fraction-part ${i<m.selected?'chosen':''}"></span>`).join('')}</div>`;
+    equation=`${m.selected} dari ${m.parts} bagian sama besar = <strong>${m.selected}/${m.parts}</strong>`;
+  }
+  return `<section class="visual-practice" aria-label="Latihan visual ${t.name}"><div class="visual-heading"><span class="eyebrow">Coba sendiri · latihan visual</span><h3>${title}</h3><p>Tekan + atau −, lalu amati perubahan gambar dan hitungannya.</p></div><div class="visual-controls">${controls}</div>${picture}<div class="visual-equation" aria-live="polite">${equation}</div></section>`;
+}
 function renderLesson(t){
   const practiced=practiceAnswered[t.id];
   const prompt=levelChallenges[t.id][state.activeLevel-1];
   const solved=practiced===prompt[2];
   const completed=topicDone(state.activeLevel,t.id);
-  return `<div class="lesson-layout" style="margin-top:22px"><article class="lesson-card"><div class="page-toolbar"><span class="topic-icon">${t.icon}</span><span class="tag">${t.tag} · Level ${state.activeLevel}</span><div class="spacer"></div><button class="ghost-button audio-toggle" data-action="read-lesson">🔊 Dengarkan Buji</button></div><h2>${t.name}</h2><p>${t.lesson}</p><div class="example-box"><strong>Contoh dari papan congklak</strong>${t.example}</div><div class="mini-question"><strong>🎯 Tantangan mini</strong><p style="margin:5px 0 0">${prompt[0]}</p><div class="answer-row">${prompt[1].map((a,i)=>`<button class="answer-chip ${practiced===i?'selected':''}" data-practice="${t.id}" data-answer="${i}">${a}</button>`).join('')}</div>${practiced!==undefined?`<p class="inline-message ${solved?'':'error'}" aria-live="polite">${solved?'Hebat, jawabanmu tepat! 🌟':`Belum cocok—tidak apa-apa! ${challengeHints[t.id][state.activeLevel-1]} Coba pilih lagi, ya.`}</p>`:''}</div><div class="page-toolbar" style="margin-top:20px"><button class="ghost-button" data-action="back-topics">← Semua materi</button><div class="spacer"></div><button class="primary-button" data-action="complete-topic" data-topic-id="${t.id}" ${solved||completed?'':'disabled'}>${completed?'Selesai di level ini ✓':'Tandai materi selesai'}</button></div></article><aside class="lesson-aside"><div class="panel"><h3 style="font:800 22px var(--display);margin:0 0 8px">💡 Tips dari Buji</h3><p class="muted small" style="margin:0">${t.tip}</p></div><div class="panel"><h3 style="font:800 22px var(--display);margin:0 0 8px">🗺️ Jalur 3 level</h3><p class="muted small">Selesaikan semua lima materi di satu level untuk membuka level berikutnya. Soal makin menantang, tetapi semua angka tetap di bawah 100.</p><span class="tag">Sekarang: Level ${state.activeLevel}</span></div><div class="panel"><h3 style="font:800 22px var(--display);margin:0 0 8px">🎧 Dengarkan</h3><p class="muted small" style="margin:0">Tekan tombol suara untuk mendengar Buji membacakan materi dengan gaya ceria dan jelas.</p></div></aside></div>`;
+  return `<div class="lesson-layout" style="margin-top:22px"><article class="lesson-card"><div class="page-toolbar"><span class="topic-icon">${t.icon}</span><span class="tag">${t.tag} · Level ${state.activeLevel}</span><div class="spacer"></div><button class="ghost-button audio-toggle" data-action="read-lesson">🔊 Dengarkan Buji</button></div><h2>${t.name}</h2><p>${t.lesson}</p><div class="example-box"><strong>Contoh dari papan congklak</strong>${t.example}</div>${renderVisualPractice(t)}<div class="mini-question"><strong>🎯 Tantangan mini</strong><p style="margin:5px 0 0">${prompt[0]}</p><div class="answer-row">${prompt[1].map((a,i)=>`<button class="answer-chip ${practiced===i?'selected':''}" data-practice="${t.id}" data-answer="${i}">${a}</button>`).join('')}</div>${practiced!==undefined?`<p class="inline-message ${solved?'':'error'}" aria-live="polite">${solved?'Hebat, jawabanmu tepat! 🌟':`Belum cocok—tidak apa-apa! ${challengeHints[t.id][state.activeLevel-1]} Coba pilih lagi, ya.`}</p>`:''}</div><div class="page-toolbar" style="margin-top:20px"><button class="ghost-button" data-action="back-topics">← Semua materi</button><div class="spacer"></div><button class="primary-button" data-action="complete-topic" data-topic-id="${t.id}" ${solved||completed?'':'disabled'}>${completed?'Selesai di level ini ✓':'Tandai materi selesai'}</button></div></article><aside class="lesson-aside"><div class="panel"><h3 style="font:800 22px var(--display);margin:0 0 8px">💡 Tips dari Buji</h3><p class="muted small" style="margin:0">${t.tip}</p></div><div class="panel"><h3 style="font:800 22px var(--display);margin:0 0 8px">🗺️ Jalur 3 level</h3><p class="muted small">Selesaikan semua lima materi di satu level untuk membuka level berikutnya. Soal makin menantang, tetapi semua angka tetap di bawah 100.</p><span class="tag">Sekarang: Level ${state.activeLevel}</span></div><div class="panel"><h3 style="font:800 22px var(--display);margin:0 0 8px">🎧 Dengarkan</h3><p class="muted small" style="margin:0">Tekan tombol suara untuk mendengar Buji membacakan materi dengan gaya ceria dan jelas.</p></div></aside></div>`;
 }
 function renderQuiz(){
-  const q=quizQuestions[quiz.index],isPre=quiz.kind==='pre',label=isPre?'Pretest awal':'Posttest akhir',ans=quiz.answers[quiz.index];
-  return `<div class="container page-wrap">${pageHeading(isPre?'Sebelum petualangan':'Akhir petualangan',isPre?'Cek bekal awalmu!':'Tunjukkan yang kamu pelajari!','Ini latihan, bukan ujian sekolah. Baca pelan-pelan dan pilih jawaban yang menurutmu tepat.')}${bujiCard(isPre?'Tidak apa-apa kalau belum tahu semuanya. Kita mulai dari sini, ya!':'Kamu sudah berlatih. Tarik napas, baca soal pelan-pelan, dan lakukan yang terbaik!')}<div class="quiz-card"><div class="quiz-top"><span class="quiz-category">${label} · ${topics.find(t=>t.id===q.cat).name}</span><span>Soal ${quiz.index+1} dari ${quizQuestions.length}</span></div><div class="progress-track"><div class="progress-fill" style="width:${(quiz.index+1)/quizQuestions.length*100}%"></div></div><div class="progress-row"><span>Langkah ${quiz.index+1}</span><span>${Math.round((quiz.index+1)/quizQuestions.length*100)}%</span></div><h2>${q.q}</h2><div class="quiz-options">${q.options.map((o,i)=>`<button class="quiz-option ${ans===i?'selected':''}" data-quiz-answer="${i}"><span class="option-letter">${String.fromCharCode(65+i)}</span>${o}</button>`).join('')}</div><div class="quiz-footer"><button class="ghost-button" data-action="quiz-prev" ${quiz.index===0?'disabled':''}>← Kembali</button><span class="small muted">${quiz.answers.filter(x=>x!==null).length}/10 terjawab</span>${quiz.index===quizQuestions.length-1?'<button class="primary-button" data-action="quiz-submit">Lihat hasil ✨</button>':'<button class="primary-button" data-action="quiz-next">Berikutnya →</button>'}</div></div></div>`;
+  const questions=quizQuestionsFor(quiz.kind),q=questions[quiz.index],isPre=quiz.kind==='pre',label=isPre?'Pretest awal':'Posttest akhir',ans=quiz.answers[quiz.index];
+  return `<div class="container page-wrap">${pageHeading(isPre?'Sebelum petualangan':'Akhir petualangan',isPre?'Cek bekal awalmu!':'Tunjukkan yang kamu pelajari!','Ini latihan, bukan ujian sekolah. Baca pelan-pelan dan pilih jawaban yang menurutmu tepat.')}${bujiCard(isPre?'Tidak apa-apa kalau belum tahu semuanya. Kita mulai dari sini, ya!':'Kamu sudah berlatih. Tarik napas, baca soal pelan-pelan, dan lakukan yang terbaik!')}<div class="quiz-card"><div class="quiz-top"><span class="quiz-category">${label} · ${topics.find(t=>t.id===q.cat).name}</span><span>Soal ${quiz.index+1} dari ${questions.length}</span></div><div class="progress-track"><div class="progress-fill" style="width:${(quiz.index+1)/questions.length*100}%"></div></div><div class="progress-row"><span>Langkah ${quiz.index+1}</span><span>${Math.round((quiz.index+1)/questions.length*100)}%</span></div><h2>${q.q}</h2><div class="quiz-options">${q.options.map((o,i)=>`<button class="quiz-option ${ans===i?'selected':''}" data-quiz-answer="${i}"><span class="option-letter">${String.fromCharCode(65+i)}</span>${o}</button>`).join('')}</div><div class="quiz-footer"><button class="ghost-button" data-action="quiz-prev" ${quiz.index===0?'disabled':''}>← Kembali</button><span class="small muted">${quiz.answers.filter(x=>x!==null).length}/${questions.length} terjawab</span>${quiz.index===questions.length-1?'<button class="primary-button" data-action="quiz-submit">Lihat hasil ✨</button>':'<button class="primary-button" data-action="quiz-next">Berikutnya →</button>'}</div></div></div>`;
 }
-function scoresByCategory(answers){const scores={};topics.forEach(t=>{const indexes=quizQuestions.map((q,i)=>q.cat===t.id?i:-1).filter(i=>i>=0);scores[t.id]=Math.round(indexes.filter(i=>answers[i]===quizQuestions[i].answer).length/indexes.length*100)});scores.total=answers.filter((a,i)=>a===quizQuestions[i].answer).length;return scores}
-function finishQuiz(){if(quiz.answers.some(a=>a===null)){toast('Jawab semua soal dulu agar hasilnya lengkap.');return}const result=scoresByCategory(quiz.answers);if(quiz.kind==='pre'){state.preScores=result;state.postScores=null;state.page='quiz-result';state.resultKind='pre'}else{state.postScores=result;state.page='quiz-result';state.resultKind='post'}save();popConfetti();render();window.scrollTo({top:0,behavior:'smooth'})}
+function scoresByCategory(answers,questions=quizQuestionsFor(quiz.kind)){const scores={};topics.forEach(t=>{const indexes=questions.map((q,i)=>q.cat===t.id?i:-1).filter(i=>i>=0);scores[t.id]=Math.round(indexes.filter(i=>answers[i]===questions[i].answer).length/indexes.length*100)});scores.total=answers.filter((a,i)=>a===questions[i].answer).length;return scores}
+function finishQuiz(){const questions=quizQuestionsFor(quiz.kind);if(quiz.answers.some(a=>a===null)){toast('Jawab semua soal dulu agar hasilnya lengkap.');return}const result=scoresByCategory(quiz.answers,questions);if(quiz.kind==='pre'){state.preScores=result;state.postScores=null;state.page='quiz-result';state.resultKind='pre'}else{state.postScores=result;state.page='quiz-result';state.resultKind='post'}save();popConfetti();render();window.scrollTo({top:0,behavior:'smooth'})}
+function adjustVisual(topic,key,step){
+  const model=visualModel[topic];if(!model)return;
+  if(topic==='division'){const choices=[2,3,4,6],at=choices.indexOf(model.groups);model.groups=choices[(at+step+choices.length)%choices.length]}
+  else if(topic==='fraction'&&key==='parts'){model.parts=Math.max(2,Math.min(4,model.parts+step));model.selected=Math.min(model.selected,model.parts)}
+  else{const limits=topic==='multiplication'?(key==='groups'?[2,5]:[1,6]):(key==='selected'?[1,model.parts]:[2,4]);model[key]=Math.max(limits[0],Math.min(limits[1],model[key]+step))}
+  render();
+}
 function renderQuizResult(){const pre=state.resultKind==='pre',scores=pre?state.preScores:state.postScores;return `<div class="container page-wrap"><div class="quiz-card"><div class="result-hero"><div class="result-star">${pre?'🌱':'🏆'}</div><span class="eyebrow">${pre?'Pretest selesai':'Posttest selesai'}</span><h2>${pre?'Ini titik awal petualanganmu!':'Lihat seberapa jauh kamu tumbuh!'}</h2><div class="score-big">${scores.total}<span style="font-size:24px;color:var(--muted)"> / 10</span></div><p class="muted">${pre?'Hasil ini jadi pembanding. Ayo belajar dan coba lagi nanti!':'Kamu sudah menyelesaikan evaluasi akhir. Hebat sekali!'}</p></div><div class="panel" style="box-shadow:none"><h3 style="font:800 23px var(--display);margin-bottom:4px">Nilai per kategori</h3><p class="small muted" style="margin-top:0">Setiap kategori berisi dua soal.</p><div style="overflow:auto"><table class="score-table"><thead><tr><th>Kategori</th><th>Nilai</th><th>Progres nilai</th></tr></thead><tbody>${topics.map(t=>`<tr><td>${t.icon} ${t.name}</td><td><strong>${scores[t.id]}%</strong></td><td><div class="bar-compare"><div><span style="width:${scores[t.id]}%"></span></div></div></td></tr>`).join('')}</tbody></table></div></div><div class="quiz-footer"><button class="ghost-button" data-page="report">Lihat laporan</button><button class="primary-button" data-action="result-continue">${pre?'Pilih materi belajar':'Lihat perjalananku'} →</button></div></div></div>`}
 function renderReport(){
   if(!state.preScores)return `<div class="container page-wrap">${pageHeading('Catatan pilihan','Perjalanan belajarmu','Laporan nilai tersedia jika kamu memilih pretest sebelum mulai belajar.')}${bujiCard('Tidak mengerjakan tes juga tidak apa-apa. Yang penting kamu mencoba, berlatih, dan menikmati proses belajar!')}<div class="empty-state"><div class="empty-emoji">🌱</div><h2>Belum ada nilai untuk dibandingkan</h2><p>Pretest dan posttest hanya pilihan. Kamu tetap bisa belajar semua materi tanpa mengerjakan keduanya.</p><button class="primary-button" data-page="learn">Kembali belajar →</button></div></div>`;
@@ -140,14 +208,14 @@ function renderReport(){
   return `<div class="container page-wrap">${pageHeading('Catatan perjalanan','Lihat tumbuhnya nilaimu','Perbandingan hasil awal dan akhir di tiap kategori. Terus berlatih dengan riang!')}${bujiCard(hasPost?'Setiap langkah belajarmu berharga. Lihat kategori yang makin kuat dan rayakan usahamu!':'Laporan akhir akan muncul setelah kamu menuntaskan tiga level dan mengikuti posttest.')}<div class="report-summary"><div class="metric"><strong>${preAvg}%</strong><span>Rata-rata pretest</span></div><div class="metric"><strong>${hasPost?postAvg+'%':'—'}</strong><span>${hasPost?'Rata-rata posttest':'Posttest belum dikerjakan'}</span></div><div class="metric"><strong>${totalProgress()}%</strong><span>Materi dipelajari</span></div></div><div class="panel"><div class="page-toolbar"><div><h2 style="font:800 25px var(--display);margin:0">Per kategori</h2><span class="small muted">Nilai dihitung dari dua soal pada tiap kategori.</span></div><div class="spacer"></div><span class="tag">${hasPost?'Pretest → Posttest':'Pretest'}</span></div><div style="overflow:auto"><table class="score-table"><thead><tr><th>Kategori</th><th>Pretest</th>${hasPost?'<th>Posttest</th><th>Perubahan</th>':''}<th>Grafik</th></tr></thead><tbody>${topics.map(t=>{const a=state.preScores[t.id],b=hasPost?state.postScores[t.id]:null,d=b===null?null:b-a;return `<tr><td>${t.icon} ${t.name}</td><td><strong>${a}%</strong></td>${hasPost?`<td><strong>${b}%</strong></td><td class="score-delta ${d>0?'delta-up':d<0?'delta-down':'delta-same'}">${d>0?'▲ +':d<0?'▼ ':'• '}${d}%</td>`:''}<td><div class="bar-compare"><div title="Pretest"><span style="width:${a}%"></span></div>${hasPost?`<div title="Posttest"><span style="width:${b}%"></span></div>`:''}</div></td></tr>`}).join('')}</tbody></table></div><p class="source-note">Grafik hijau menunjukkan pretest; grafik emas menunjukkan posttest. Coba latihan lagi agar konsep makin melekat.</p></div><div class="page-toolbar" style="margin-top:18px"><button class="ghost-button" data-page="learn">Kembali ke materi</button><div class="spacer"></div><button class="ghost-button" data-action="start-pretest">Ulangi pretest</button>${state.postScores?'<button class="primary-button" data-action="start-posttest">Ulangi posttest →</button>':`<button class="primary-button" ${allLevelsDone()?'data-action="start-posttest"':'data-page="learn"'}>${allLevelsDone()?'Mulai posttest':'Lanjut belajar'} →</button>`}</div></div>`;
 }
 
-function initialGame(mode='two'){return {pits:Array(16).fill(0).map((_,i)=>i===7||i===15?0:7),turn:0,over:false,mode,animating:false,aiThinking:false,message:'Pilih lubang yang berisi biji untuk memulai.'}}
+function initialGame(mode='two'){return {pits:Array(16).fill(0).map((_,i)=>i===7||i===15?0:7),turn:0,over:false,mode,animating:false,aiThinking:false,undoStack:[],message:'Pilih lubang yang berisi biji untuk memulai.'}}
 function playerLabel(side){if(side===0)return state.name||'Kamu';return state.game?.mode==='ai'?'Buji / komputer':'Temanmu'}
 function renderPlay(){
   if(!state.game)state.game=initialGame();
   const g=state.game,p=g.pits,top=[14,13,12,11,10,9,8],bottom=[0,1,2,3,4,5,6];
   const turnLabel=g.turn===0?`Giliran ${playerLabel(0)}`:g.mode==='ai'?'Giliran Buji / komputer':'Giliran temanmu';
   const pit=(i,own)=>`<button class="pit ${!g.over&&!g.animating&&!g.aiThinking&&g.turn===own&&p[i]>0?'playable':''} ${g.last===i?'last-drop':''}" data-pit="${i}" ${g.over||g.animating||g.aiThinking||g.turn!==own||p[i]===0?'disabled':''} aria-label="Lubang ${own===0?i+1:15-i} ${playerLabel(own)}, berisi ${p[i]} biji"><span class="seeds">${Array.from({length:Math.min(p[i],12)},()=>'<i class="seed"></i>').join('')}</span><span class="seed-count">${p[i]}</span></button>`;
-  return `<div class="container page-wrap">${pageHeading('Mode tradisional','Ayo main congklak!','Bergiliran, hitung bijinya, dan kumpulkan sebanyak-banyaknya di lumbungmu.')}${bujiCard(g.mode==='ai'?'Ayo tantang aku! Aku akan memilih lubang dan menabur biji satu per satu. Kamu mulai dulu, ya!':'Kita bisa bermain berdua di satu perangkat. Pemain yang duduk di bawah mulai dulu, ya!')}<div class="game-mode-picker" role="group" aria-label="Pilih lawan"><button class="mode-choice ${g.mode==='two'?'active':''}" data-game-mode="two" ${g.animating||g.aiThinking?'disabled':''}><span>👫</span><b>2 pemain</b><small>Main bersama teman</small></button><button class="mode-choice ${g.mode==='ai'?'active':''}" data-game-mode="ai" ${g.animating||g.aiThinking?'disabled':''}><span>🤖</span><b>Vs Buji / komputer</b><small>Tantang lawan pintar</small></button></div><div class="turn-banner" role="status"><span></span>${g.over?g.message:g.animating?'Biji sedang ditabur satu per satu…':g.aiThinking?'Buji sedang memilih lubang…':turnLabel}</div><div class="board-shell"><div class="board-labels"><span>Lumbung ${esc(playerLabel(1))}</span><span>Lubang congklak</span><span>Lumbung ${esc(playerLabel(0))}</span></div><div class="board-play-area"><div class="store-pit" data-store="15" aria-label="Lumbung ${esc(playerLabel(1))}"><span class="store-count">${p[15]}</span><small>${esc(playerLabel(1).toUpperCase())}</small></div><div class="pits"><div class="pit-row" aria-label="Lubang ${esc(playerLabel(1))}">${top.map(i=>pit(i,1)).join('')}</div><div class="pit-row" aria-label="Lubang ${esc(playerLabel(0))}">${bottom.map(i=>pit(i,0)).join('')}</div></div><div class="store-pit" data-store="7" aria-label="Lumbung ${esc(playerLabel(0))}"><span class="store-count">${p[7]}</span><small>${esc(playerLabel(0).toUpperCase())}</small></div></div></div><p class="small muted game-message" style="text-align:center;margin:0 0 17px" aria-live="polite">${esc(g.message)}</p><div class="game-actions"><button class="secondary-button" data-action="new-game" ${g.animating||g.aiThinking?'disabled':''}>↻ Mulai ulang</button><button class="ghost-button" data-action="show-rules">Cara bermain</button></div><div class="panel" style="margin-top:25px"><h2 style="font:800 25px var(--display);margin:0 0 5px">🌰 Aturan ringkas</h2><p class="small muted" style="margin-top:0">Mulai dengan 7 biji di tiap lubang kecil, total 98 biji. Aturan congklak punya variasi antardaerah.</p><div class="rules-grid"><div class="rule-step"><b>01 · Ambil</b><p>Pilih lubang di barismu yang masih berisi biji.</p></div><div class="rule-step"><b>02 · Sebar</b><p>Bijinya ditabur satu per satu searah putaran. Lumbung lawan dilewati. Jika biji terakhir jatuh di lubang berisi biji, ambil isinya dan lanjutkan.</p></div><div class="rule-step"><b>03 · Kumpulkan</b><p>Biji terakhir di lumbung sendiri memberi giliran lagi. Jika jatuh di lubang kosongmu, ambil isi lubang seberang. Permainan selesai saat satu sisi kosong.</p></div></div><p class="small muted" style="margin-bottom:0">Pada akhir permainan, biji tersisa masuk ke lumbung pemilik baris. Aturan dapat berbeda di tiap daerah.</p></div></div>`;
+  return `<div class="container page-wrap">${pageHeading('Mode tradisional','Ayo main congklak!','Bergiliran, hitung bijinya, dan kumpulkan sebanyak-banyaknya di lumbungmu.')}${bujiCard(g.mode==='ai'?'Ayo tantang aku! Aku akan memilih lubang dan menabur biji satu per satu. Kamu mulai dulu, ya!':'Kita bisa bermain berdua di satu perangkat. Pemain yang duduk di bawah mulai dulu, ya!')}<div class="game-mode-picker" role="group" aria-label="Pilih lawan"><button class="mode-choice ${g.mode==='two'?'active':''}" data-game-mode="two" ${g.animating||g.aiThinking?'disabled':''}><span>👫</span><b>2 pemain</b><small>Main bersama teman</small></button><button class="mode-choice ${g.mode==='ai'?'active':''}" data-game-mode="ai" ${g.animating||g.aiThinking?'disabled':''}><span>🤖</span><b>Vs Buji / komputer</b><small>Tantang lawan pintar</small></button></div><div class="turn-banner" role="status"><span></span>${g.over?g.message:g.animating?'Biji sedang ditabur satu per satu…':g.aiThinking?'Buji sedang memilih lubang…':turnLabel}</div><div class="board-shell"><div class="board-labels"><span>Lumbung ${esc(playerLabel(1))}</span><span>Lubang congklak</span><span>Lumbung ${esc(playerLabel(0))}</span></div><div class="board-play-area"><div class="store-pit" data-store="15" aria-label="Lumbung ${esc(playerLabel(1))}"><span class="store-count">${p[15]}</span><small>${esc(playerLabel(1).toUpperCase())}</small></div><div class="pits"><div class="pit-row" aria-label="Lubang ${esc(playerLabel(1))}">${top.map(i=>pit(i,1)).join('')}</div><div class="pit-row" aria-label="Lubang ${esc(playerLabel(0))}">${bottom.map(i=>pit(i,0)).join('')}</div></div><div class="store-pit" data-store="7" aria-label="Lumbung ${esc(playerLabel(0))}"><span class="store-count">${p[7]}</span><small>${esc(playerLabel(0).toUpperCase())}</small></div></div></div><p class="small muted game-message" style="text-align:center;margin:0 0 17px" aria-live="polite">${esc(g.message)}</p><div class="game-actions"><button class="secondary-button" data-action="new-game" ${g.animating||g.aiThinking?'disabled':''}>↻ Mulai ulang</button><button class="ghost-button" data-action="undo-move" ${!g.undoStack?.length||g.animating||g.aiThinking?'disabled':''}>↶ Urungkan langkah</button><button class="ghost-button" data-action="show-hint" aria-expanded="false">💡 Petunjuk</button><button class="ghost-button" data-action="show-rules">Cara bermain</button></div><p id="game-hint" class="game-hint" hidden>Mulai dari lubang yang berisi biji di barismu. Sebarkan biji satu per satu; panduan lengkap bisa dibuka kapan saja.</p><details class="panel game-rules" id="game-rules"><summary>🌰 Panduan aturan congklak</summary><p class="small muted">Permainan ini memakai aturan ringkas. Ada variasi aturan congklak di berbagai daerah.</p><div class="rules-grid"><div class="rule-step"><b>01 · Ambil</b><p>Pilih lubang di barismu yang masih berisi biji.</p></div><div class="rule-step"><b>02 · Sebar</b><p>Bijinya ditabur satu per satu searah putaran. Lumbung lawan dilewati. Jika biji terakhir jatuh di lubang berisi biji, ambil isinya dan lanjutkan.</p></div><div class="rule-step"><b>03 · Kumpulkan</b><p>Biji terakhir di lumbung sendiri memberi giliran lagi. Jika jatuh di lubang kosongmu, ambil isi lubang seberang. Permainan selesai saat satu sisi kosong.</p></div></div><p class="small muted" style="margin-bottom:0">Pada akhir permainan, biji tersisa masuk ke lumbung pemilik baris.</p></details></div>`;
 }
 function gameNode(index){return index===7||index===15?document.querySelector(`[data-store="${index}"]`):document.querySelector(`[data-pit="${index}"]`)}
 function syncPit(index){
@@ -183,7 +251,7 @@ async function movePit(index,automated=false){
   const p=g.pits,player=g.turn,isOwn=i=>player===0?i>=0&&i<=6:i>=8&&i<=14;
   if(!isOwn(index)||p[index]===0||(!automated&&player===1&&g.mode==='ai'))return;
   const ownStore=player===0?7:15,oppStore=player===0?15:7;
-  g.animating=true;g.aiThinking=false;g.message=`${player===0?playerLabel(0):playerLabel(1)} mengambil biji…`;g.last=index;render();
+  g.undoStack=Array.isArray(g.undoStack)?g.undoStack:[];g.undoStack.push({pits:g.pits.slice(),turn:g.turn,over:g.over,message:g.message});if(g.undoStack.length>40)g.undoStack.shift();g.animating=true;g.aiThinking=false;g.message=`${player===0?playerLabel(0):playerLabel(1)} mengambil biji…`;g.last=index;render();
   let seeds=p[index],pos=index,from=index,extraTurn=false,relays=0,message='';p[index]=0;syncPit(index);
   while(true){
     while(seeds>0){pos=(pos+1)%16;if(pos===oppStore)continue;await animateSeed(from,pos);seeds--;from=pos}
@@ -198,6 +266,13 @@ async function movePit(index,automated=false){
   if(!finished){if(!extraTurn)g.turn=1-player;g.message=(relays?`Biji disebar lanjut ${relays} kali. `:'')+message+(extraTurn?'':` Sekarang giliran ${playerLabel(g.turn)}.`)}
   g.animating=false;save();render();
   if(!g.over&&g.mode==='ai'&&g.turn===1)setTimeout(runAiTurn,650);
+}
+function undoGameMove(){
+  const g=state.game;if(!g||g.animating||g.aiThinking||!g.undoStack?.length){toast('Belum ada langkah yang bisa diurungkan.');return}
+  const history=g.undoStack.slice();let snapshot=history.pop();
+  if(g.mode==='ai'&&snapshot?.turn===1){while(snapshot&&snapshot.turn!==0&&history.length)snapshot=history.pop()}
+  if(!snapshot){toast('Langkah sebelumnya tidak ditemukan.');return}
+  g.pits=snapshot.pits.slice();g.turn=snapshot.turn;g.over=false;g.animating=false;g.aiThinking=false;g.last=null;g.undoStack=history;g.message='Langkah terakhir diurungkan. Silakan coba pilihan lain.';save();render();toast('Langkah terakhir diurungkan!');
 }
 function simulateMove(source,index,player){
   const p=source.slice(),ownStore=player===0?7:15,oppStore=player===0?15:7,isOwn=i=>player===0?i>=0&&i<=6:i>=8&&i<=14;
@@ -285,7 +360,9 @@ function handleAction(action,el){
     case'quiz-submit':finishQuiz();break;
     case'result-continue':if(state.resultKind==='pre')setPage('learn');else setPage('report');break;
     case'new-game':state.game=initialGame(state.game?.mode||'two');save();render();toast('Papan baru siap dimainkan!');break;
-    case'show-rules':$('.board-shell')?.scrollIntoView({behavior:'smooth',block:'center'});toast('Pilih lubang berisi biji di barismu.');break;
+    case'show-rules':{const rules=$('#game-rules');if(rules){rules.open=true;rules.scrollIntoView({behavior:'smooth',block:'center'})}break}
+    case'show-hint':{const hint=$('#game-hint'),button=$('[data-action=\"show-hint\"]');if(hint&&button){hint.hidden=!hint.hidden;button.setAttribute('aria-expanded',String(!hint.hidden))}break}
+    case'undo-move':undoGameMove();break;
     case'read-lesson':readLesson();break;
     case'login':openLogin();break;
     case'close-modal':closeModal();break;
@@ -301,6 +378,7 @@ document.addEventListener('click',e=>{
   const topic=e.target.closest('[data-topic]');if(topic){state.activeTopic=topic.dataset.topic;state.page='learn';save();render();window.scrollTo({top:0,behavior:'smooth'});return}
   const opt=e.target.closest('[data-quiz-answer]');if(opt){quiz.answers[quiz.index]=Number(opt.dataset.quizAnswer);playTone(500,.07);render();return}
   const practice=e.target.closest('[data-practice]');if(practice){const id=practice.dataset.practice;practiceAnswered[id]=Number(practice.dataset.answer);const key=levelChallenges[id][state.activeLevel-1][2];if(practiceAnswered[id]===key){playTone(760,.15);popConfetti()}else playTone(240,.12);render();return}
+  const visual=e.target.closest('[data-visual-topic]');if(visual){adjustVisual(visual.dataset.visualTopic,visual.dataset.visualKey,Number(visual.dataset.step));return}
   const pit=e.target.closest('[data-pit]');if(pit){movePit(Number(pit.dataset.pit));return}
 });
 document.addEventListener('submit',e=>{
@@ -312,6 +390,6 @@ document.addEventListener('submit',e=>{
 });
 $('#music-toggle').addEventListener('click',()=>music.on?stopMusic():startMusic());
 $('#menu-toggle').addEventListener('click',()=>{const nav=$('#main-nav'),expanded=$('#menu-toggle').getAttribute('aria-expanded')==='true';nav.classList.toggle('open',!expanded);$('#menu-toggle').setAttribute('aria-expanded',String(!expanded))});
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();if(e.key==='Enter'&&state.page==='quiz'&&e.target.tagName!=='BUTTON'&&quiz.index<quizQuestions.length-1)handleAction('quiz-next',{})});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();if(e.key==='Enter'&&state.page==='quiz'&&e.target.tagName!=='BUTTON'&&quiz.index<quizQuestionsFor(quiz.kind).length-1)handleAction('quiz-next',{})});
 if(state.page==='quiz')state.page='home';render();
 if(state.page==='play'&&state.game?.mode==='ai'&&state.game.turn===1&&!state.game.over)setTimeout(runAiTurn,650);
