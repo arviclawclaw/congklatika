@@ -30,8 +30,8 @@ async function pageAt(browser, url, options={}) {
     const {context,page}=await pageAt(browser,url); page.on('pageerror',e=>errors.push(e.message));
     await page.locator('.nav-link[data-page="learn"]').click();
     await page.evaluate(()=>{state.activeLevel=1;state.levelProgress[1]=['fraction'];state.activeTopic=null;render()});
-    const completion=await page.locator('[data-topic="fraction"]').evaluate(el=>({decorative:el.querySelectorAll('.completion-mark').length,status:el.querySelector('.topic-status.done')?.textContent||''}));
-    ok(completion.decorative===0&&completion.status.includes('Selesai di level ini')&&(completion.status.match(/✓/g)||[]).length===1,'status materi selesai jelas dengan tepat satu tanda centang');
+    const completion=await page.locator('[data-topic="fraction"]').evaluate(el=>({decorative:el.querySelectorAll('.completion-mark').length,status:el.querySelector('.topic-status.done')?.textContent||'',check:getComputedStyle(el.querySelector('.topic-status.done'),':before').content}));
+    ok(completion.decorative===0&&completion.status.includes('Selesai di level ini')&&completion.check.replace(/["']/g,'')==='✓'&&(completion.status.match(/✓/g)||[]).length===0,'status materi selesai menampilkan tepat satu tanda centang');
 
     for(const level of [1,2,3]) for(const topic of ['addition','subtraction','multiplication','division','fraction']) {
       await page.evaluate(({level,topic})=>{state.page='learn';state.activeLevel=level;state.activeTopic=topic;render()}, {level,topic});
