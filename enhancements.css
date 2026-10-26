@@ -449,3 +449,21 @@ button:disabled{opacity:.72}
   .reset-confirmation-modal .themed-modal-actions{grid-template-columns:1fr}
 }
 @media(prefers-reduced-motion:reduce){.danger-confirm-button{transition:none}.danger-confirm-button:hover{transform:none}}
+
+
+/* Header avatar: match the adjacent Reset/Music control surface and corners. */
+.avatar-button{
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:#fffdf7;
+  color:var(--leaf);
+  box-shadow:none;
+  padding:0;
+  line-height:1;
+  flex:0 0 44px;
+  width:44px;
+  height:44px;
+}
+@media(max-width:420px){
+  .header-actions .avatar-button{flex-basis:44px;width:44px;height:44px}
+}

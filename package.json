@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "test": "node tests/game-regression.cjs",
-    "test:browser": "node tests/browser-regression.cjs && node tests/navigation-progress.cjs && node tests/learning-mode-regression.cjs",
+    "test:browser": "node tests/browser-regression.cjs && node tests/navigation-progress.cjs && node tests/learning-mode-regression.cjs && node tests/header-avatar.cjs",
     "test:all": "npm test && npm run test:browser"
   },
   "devDependencies": {
