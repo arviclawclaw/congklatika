@@ -435,8 +435,8 @@ function renderQuestionIllustration(t,prompt){
     for(let i=0;i<4;i++){counts[i+1]=1;labels[i+1]='1/4'}
     legend=level===3?'Dua bagian perempat sama dengan setengah; satu bagian lagi membuat 3/4.':'Bagian berwarna menunjukkan bagian yang dipilih; semuanya harus sama besar.';
   }else return '';
-  const firstRow=Array.from({length:7},(_,i)=>renderQuestionPit(labels[i],counts[i],counts[i]===0,counts[i]===0?'0':labels[i]||String(counts[i]))).join('');
-  const secondRow=Array.from({length:7},(_,i)=>{const index=i+7;return renderQuestionPit(labels[index],counts[index],counts[index]===0,counts[index]===0?'0':labels[index]||String(counts[index]))}).join('');
+  const firstRow=Array.from({length:7},(_,i)=>renderQuestionPit(labels[i],counts[i],counts[i]===0)).join('');
+  const secondRow=Array.from({length:7},(_,i)=>{const index=i+7;return renderQuestionPit(labels[index],counts[index],counts[index]===0)}).join('');
   const rowLabels=counts.map((count,i)=>`Lubang ${i+1}: ${count} biji`).join('; ');
   return `<section class="question-illustration" data-question-illustration="${t.id}-${level}" aria-label="Ilustrasi congklak untuk ${esc(t.name)}, level ${level}"><div class="question-illustration-heading"><span class="eyebrow">Ilustrasi ${esc(t.name.toLowerCase())}</span><strong>${title}</strong><p>${description}</p></div><div class="question-board" role="img" aria-label="Papan congklak dengan 14 lubang kecil dalam dua baris, tujuh lubang tiap baris, dan dua lumbung di ujung. ${esc(operation)}. ${esc(description)}. ${rowLabels}."><div class="question-board-row"><span class="question-board-store" aria-hidden="true">Lumbung</span><div class="question-pit-rows"><div class="question-pit-row" aria-hidden="true">${firstRow}</div><div class="question-pit-row" aria-hidden="true">${secondRow}</div></div><span class="question-board-store" aria-hidden="true">Lumbung</span></div></div><p class="question-operation">${operation}</p><p class="question-legend">${legend}</p></section>`;
 }
