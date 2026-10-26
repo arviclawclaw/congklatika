@@ -532,7 +532,9 @@ function newStudyRound(){return {pits:initialStudyBoard(),selected:Array(16).fil
 function buildStudyQuestion(pitIndex,topicId,count){
   let prompt='',options=[],answer=0,hint='';
   if(topicId==='number-pattern'){
-    const next=count+6;prompt=`Pola biji bertambah 2: ${count}, ${count+2}, ${count+4}, … Berapa bilangan berikutnya?`;options=[String(next-1),String(next),String(next+1)];answer=1;hint='Cari selisih antara dua angka yang berdekatan, lalu tambahkan jumlah yang sama.';
+    const next=count+6;
+    prompt=`Urutan biji: ${count}, ${count+2}, ${count+4}, … Berapa bilangan berikutnya?`;
+    options=[String(next-1),String(next),String(next+1)];answer=1;hint='Cari selisih antara dua angka yang berdekatan, lalu tambahkan jumlah yang sama.';
   }else if(topicId==='addition'){
     const add=3,total=count+add;prompt=`Lubang pilihan berisi ${count} biji. Buji menambah ${add} biji. Berapa jumlahnya?`;options=[String(total-1),String(total),String(total+1)];answer=1;hint='Mulai dari jumlah biji di lubang, lalu hitung maju tiga langkah.';
   }else if(topicId==='subtraction'){

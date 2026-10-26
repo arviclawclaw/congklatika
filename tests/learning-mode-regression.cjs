@@ -28,6 +28,8 @@ async function pageAt(browser, url, options={}) {
   const browser=await chromium.launch(launch),errors=[];
   try {
     const {context,page}=await pageAt(browser,url); page.on('pageerror',e=>errors.push(e.message));
+    const starAvatar=await page.evaluate(()=>{const originalCharacter=state.character;state.character='bintang';state.page='profile';render();const avatar=document.querySelector('.profile-avatar'),style=getComputedStyle(avatar),result={emoji:avatar.textContent.trim(),background:style.backgroundColor,border:style.borderColor,label:document.querySelector('.profile-card p')?.textContent||''};state.character=originalCharacter;state.page='home';render();return result});
+    ok(starAvatar.emoji==='⭐'&&starAvatar.background==='rgb(36, 74, 54)'&&starAvatar.border==='rgb(244, 212, 127)'&&starAvatar.label.includes('Bintang'),'ikon profil Bintang tetap sama dan kini memiliki latar gelap serta bingkai kontras');
     await page.locator('.nav-link[data-page="learn"]').click();
     await page.evaluate(()=>{state.activeLevel=1;state.levelProgress[1]=['fraction'];state.activeTopic=null;render()});
     const completion=await page.locator('[data-topic="fraction"]').evaluate(el=>({decorative:el.querySelectorAll('.completion-mark').length,status:el.querySelector('.topic-status.done')?.textContent||'',check:getComputedStyle(el.querySelector('.topic-status.done'),':before').content}));
@@ -40,6 +42,7 @@ async function pageAt(browser, url, options={}) {
       const diagram=await page.locator('.question-illustration').evaluate(el=>({label:el.querySelector('.question-illustration-heading .eyebrow')?.textContent||'',pits:el.querySelectorAll('.question-pit').length,rows:[...el.querySelectorAll('.question-pit-row')].map(row=>row.querySelectorAll('.question-pit').length),stores:el.querySelectorAll('.question-board-store').length,alt:el.querySelector('.question-board')?.getAttribute('aria-label')||''}));
       ok((topic==='number-pattern'?guide.toLowerCase().includes('selisih'):guide.includes('Dari benda ke simbol'))&&guide.includes('Ringkasan')&&guide.includes('Hubungkan dengan congklak')&&await page.locator('.lesson-guide-bridge li').count()===3,`${topic} Level ${level}: panduan berisi konsep, langkah, rangkuman, dan kaitan papan`);
       ok(example.includes('Contoh terpecahkan')&&await page.locator('.worked-example ol li').count()===3,`${topic} Level ${level}: contoh terpecahkan tersedia`);
+      if(topic==='number-pattern'&&level===1)ok(example.includes('pola tambah 2')&&example.includes('5 + 2 = 7'),'materi pola bilangan tetap menjelaskan aturan tambah 2 dengan contoh');
       ok(diagram.label.toLowerCase().includes(topic==='addition'?'penjumlahan':topic==='subtraction'?'pengurangan':topic==='multiplication'?'perkalian':topic==='division'?'pembagian':topic==='fraction'?'pecahan':'pola bilangan')&&diagram.pits===14&&diagram.rows.join('|')==='7|7'&&diagram.stores===2&&diagram.alt.includes('14 lubang kecil'),`${topic} Level ${level}: label sesuai operasi dan diagram berpola 14+2`);
     }
     const maxMaterialNumber=await page.evaluate(()=>{
@@ -71,13 +74,15 @@ async function pageAt(browser, url, options={}) {
     const rightResult=await page.evaluate(()=>({right:studyRound.pits[7],left:studyRound.pits[15],pit:studyRound.pits[1],selected:studyRound.selected[1],count:studyRound.answered,total:studyRound.pits.reduce((a,b)=>a+b,0)}));
     ok(rightResult.right===second.count&&rightResult.left===first.count&&rightResult.pit===0&&rightResult.selected&&rightResult.count===2&&rightResult.total===98,'jawaban benar masuk ke lumbung pemain kanan dan biji tetap terhitung tepat');
 
-    const operations=[['subtraction','Pindahkan'],['multiplication','lubang memiliki isi sama'],['division','dibagikan rata'],['fraction','pecahan apa'],['number-pattern','Pola biji bertambah 2']];
+    const operations=[['subtraction','Pindahkan'],['multiplication','lubang memiliki isi sama'],['division','dibagikan rata'],['fraction','pecahan apa'],['number-pattern','Urutan biji:']];
     const used=new Set([0,1]);
     for(const [operationIndex,[topic,phrase]] of operations.entries()){
       await page.locator(`[data-study-topic="${topic}"]`).click();
       const pitIndex=9+operationIndex;used.add(pitIndex);
       await page.locator(`[data-study-pit="${pitIndex}"]`).click();
-      ok((await page.locator('.study-question-modal h2').innerText()).toLowerCase().includes(phrase.toLowerCase())&&await page.evaluate(()=>studyQuestion.topicId)===topic,`lubang membuka popup soal interaktif jenis ${topic}`);
+      const questionText=await page.locator('.study-question-modal h2').innerText();
+      const patternValid=topic!=='number-pattern'||await page.evaluate(i=>{const q=studyQuestion,n=studyRound.pits[i];return q.prompt===`Urutan biji: ${n}, ${n+2}, ${n+4}, … Berapa bilangan berikutnya?`&&!q.prompt.toLowerCase().includes('bertambah')&&q.answer===1&&q.options.map(Number).join(',')===[n+5,n+6,n+7].join(',')},pitIndex);
+      ok(questionText.toLowerCase().includes(phrase.toLowerCase())&&await page.evaluate(()=>studyQuestion.topicId)===topic&&patternValid,`lubang membuka popup soal interaktif jenis ${topic}${topic==='number-pattern'?' dengan sequence dan jawaban/distraktor yang benar tanpa petunjuk aturan':''}`);
       const before=await page.evaluate(i=>({count:studyRound.pits[i],answer:studyQuestion.answer,right:studyRound.pits[7],left:studyRound.pits[15]}),pitIndex);
       await page.locator(`[data-study-answer="${before.answer}"]`).click();
       await page.locator('.study-question-modal').waitFor({state:'detached'});

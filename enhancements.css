@@ -21,6 +21,13 @@ button:disabled{opacity:.72}
 .quiz-review summary{cursor:pointer;font-weight:900;line-height:1.5}
 .quiz-review p{margin:8px 0 0;color:#40584a}
 .profile-data-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.profile-avatar{
+  background-color:#244a36;
+  background-image:radial-gradient(circle at 50% 43%,#386d4c 0%,#244a36 72%);
+  border:3px solid #f4d47f;
+  box-shadow:0 0 0 4px #fffdf7,0 0 0 7px #d8a737,0 8px 20px rgba(31,69,48,.24);
+  font-size:56px;
+}
 .danger-button{color:#813b29;border-color:#d7a398}
 .level-report{padding-left:22px;color:#40584a}
 .level-report li{margin:6px 0}
