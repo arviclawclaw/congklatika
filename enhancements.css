@@ -22,12 +22,13 @@ button:disabled{opacity:.72}
 .quiz-review p{margin:8px 0 0;color:#40584a}
 .profile-data-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
 .profile-avatar{
-  background-color:#244a36;
-  background-image:radial-gradient(circle at 50% 43%,#386d4c 0%,#244a36 72%);
-  border:3px solid #f4d47f;
+  background-color:#fffdf7;
+  background-image:none;
+  border:3px solid #d8a737;
   box-shadow:0 0 0 4px #fffdf7,0 0 0 7px #d8a737,0 8px 20px rgba(31,69,48,.24);
   font-size:56px;
 }
+.avatar-button{background:#fffdf7;color:#294b3a;border:2px solid #d8a737;box-shadow:0 0 0 2px #fffdf7,0 0 0 4px #d8a737}
 .danger-button{color:#813b29;border-color:#d7a398}
 .level-report{padding-left:22px;color:#40584a}
 .level-report li{margin:6px 0}
@@ -420,3 +421,31 @@ button:disabled{opacity:.72}
   .profile-character-option:hover{transform:none}
   .mini-question.answer-correct,.study-question-modal.answer-correct,.mini-question.answer-wrong,.study-question-modal.answer-wrong,.store-pit.capture-pop,.board-shell.combo-glow{animation:none!important}
 }
+
+/* Reset is a deliberate, keyboard-accessible confirmation; header uses the music control palette. */
+.reset-toggle{display:inline-flex;align-items:center;justify-content:center;gap:5px}
+.reset-toggle svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.reset-confirmation-modal{width:min(540px,100%);text-align:left}
+.reset-confirmation-modal .themed-modal-art{margin-inline:auto}
+.reset-confirmation-modal .eyebrow{display:table;margin:0 auto;text-align:center}
+.reset-confirmation-modal h2,.reset-confirmation-modal>p{text-align:center}
+.reset-confirmation-modal .themed-modal-actions{grid-template-columns:1fr 1fr;margin-top:18px}
+.reset-modal-note{margin-top:-3px!important;color:#536558!important;font-size:14px!important;font-weight:800}
+.danger-confirm-button{border:0;border-radius:15px;padding:12px 20px;background:#963d31;color:#fff;font-weight:900;box-shadow:0 7px 16px rgba(150,61,49,.2);transition:transform .18s,box-shadow .18s,background .18s}
+.danger-confirm-button:hover{background:#7f3027;transform:translateY(-2px);box-shadow:0 10px 20px rgba(127,48,39,.24)}
+.danger-confirm-button:focus-visible{outline:3px solid #813b00;outline-offset:3px;box-shadow:0 0 0 3px #fffdf7}
+@media(max-width:600px){
+  .reset-toggle span{display:none}
+  .reset-toggle{width:42px;padding:7px;display:grid;place-items:center}
+}
+@media(min-width:521px) and (max-width:600px){
+  .header-actions .avatar-button{display:none}
+  .header-actions .sfx-toggle span,.header-actions #music-toggle span{display:none}
+  .header-actions .music-button{width:42px;padding:7px;display:grid;place-items:center}
+}
+@media(max-width:350px){.header-actions .music-button{width:44px}}
+@media(max-width:520px){
+  .reset-confirmation-modal{max-height:90dvh;padding:20px 16px}
+  .reset-confirmation-modal .themed-modal-actions{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){.danger-confirm-button{transition:none}.danger-confirm-button:hover{transform:none}}

@@ -168,6 +168,8 @@ let profileDialogRequired=!state.profileSaved;
 let profileDialogName=state.name||'';
 let profileDialogCharacter=state.character||'buji';
 let profileReturnFocus=null;
+let resetDialogOpen=false;
+let resetReturnFocus=null;
 let music={on:false,ctx:null,timer:null,step:0};
 let effects={on:loadEffectsPreference(),ctx:null,voices:new Set()};
 let speechVoice=null;
@@ -574,7 +576,9 @@ function answerStudyQuestion(answerIndex){
 }
 function renderActiveModal(opening=false){
   const root=$('#modal-root');if(!root)return;let html='',kind='';
-  if(pendingQuizLeavePage!==null){
+  if(resetDialogOpen){
+    kind='reset-data';html=`<div class="modal-backdrop themed-modal-backdrop reset-modal-backdrop"><section class="themed-modal reset-confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="reset-dialog-title" aria-describedby="reset-dialog-description" tabindex="-1"><div class="themed-modal-art" aria-hidden="true">🧹</div><span class="eyebrow">Konfirmasi sebelum melanjutkan</span><h2 id="reset-dialog-title">Reset data di perangkat ini?</h2><p id="reset-dialog-description">Semua data lokal CongklaTika di perangkat ini—profil (nama panggilan dan karakter), progres belajar, nilai tes, draf tes, papan permainan tersimpan, dan preferensi efek suara—akan dihapus. Data situs lain tidak disentuh.</p><p class="reset-modal-note">Tidak ada data yang dihapus sebelum kamu memilih “Reset data”.</p><div class="themed-modal-actions"><button class="primary-button" type="button" data-action="reset-cancel">Batal</button><button class="danger-confirm-button" type="button" data-action="reset-confirm">Reset data</button></div></section></div>`;
+  }else if(pendingQuizLeavePage!==null){
     kind='quiz-leave';html=`<div class="modal-backdrop themed-modal-backdrop"><section class="themed-modal quiz-leave-modal" role="dialog" aria-modal="true" aria-labelledby="quiz-leave-title" aria-describedby="quiz-leave-description" tabindex="-1"><div class="themed-modal-art" aria-hidden="true">📚</div><span class="eyebrow">Petualanganmu tersimpan</span><h2 id="quiz-leave-title">Tes belum selesai</h2><p id="quiz-leave-description">Draf jawabanmu tersimpan otomatis di perangkat ini. Kamu bisa melanjutkan tes sekarang atau meninggalkannya dan kembali lagi nanti.</p><div class="themed-modal-actions"><button class="primary-button" data-action="quiz-leave-cancel">Lanjut tes</button><button class="ghost-button" data-action="quiz-leave-confirm">Tinggalkan tes</button></div></section></div>`;
   }else if(state.page==='play'&&playMode==='learning'&&studyQuestion){
     kind='study-question';const q=studyQuestion,topic=topics.find(item=>item.id===q.topicId),answered=q.selectedAnswer!==null;
@@ -587,7 +591,7 @@ function renderActiveModal(opening=false){
   root.innerHTML=html;
   if(!kind){modalKind='';modalFocusIntent=null;return}
   const changed=modalKind!==kind;modalKind=kind;
-  if(opening||changed){const initial=kind==='quiz-leave'?root.querySelector('[data-action="quiz-leave-cancel"]'):kind==='study-question'?root.querySelector('[data-study-answer]'):root.querySelector('#profile-name');(initial||root.querySelector('[role="dialog"]'))?.focus({preventScroll:true})}
+  if(opening||changed){const initial=kind==='quiz-leave'?root.querySelector('[data-action="quiz-leave-cancel"]'):kind==='study-question'?root.querySelector('[data-study-answer]'):kind==='reset-data'?root.querySelector('[data-action="reset-cancel"]'):root.querySelector('#profile-name');(initial||root.querySelector('[role="dialog"]'))?.focus({preventScroll:true})}
   else if(modalFocusIntent==='feedback'){root.querySelector('[data-study-feedback]')?.focus({preventScroll:true});modalFocusIntent=null}
 }
 function selectPlayMode(mode){
@@ -720,17 +724,19 @@ function renderTeam(){
 }
 function renderProfile(){
   const character=playerCharacters.find(item=>item.id===state.character)||playerCharacters[0];
-  return `<div class="container page-wrap">${pageHeading('Profil pemain','Atur profilmu','Nama panggilan dan karakter membantu membuat petualangan terasa milikmu.')}${bujiCard('Profil dan progres hanya tersimpan di browser pada perangkat ini. Tidak ada akun atau sinkronisasi ke server.')}<div class="profile-layout"><div class="panel profile-card"><div class="profile-avatar" aria-hidden="true">${character.emoji}</div><h2>${state.name?esc(state.name):'Petualang baru'}</h2><p class="muted">Karakter pilihan: ${esc(character.name)}</p><span class="tag">🌱 Progres belajar ${totalProgress()}%</span><div class="divider"></div><button class="primary-button" data-action="edit-profile">Ubah nama &amp; karakter</button></div><div class="panel"><h2 style="font:800 25px var(--display);margin:0 0 4px">Data di perangkat ini</h2><p class="small muted">Nama, karakter, nilai, dan progres tersimpan lokal di browser. Tidak ada data siswa yang dikirim ke server.</p><div class="profile-data-actions"><button class="ghost-button" data-action="export-data">Unduh salinan data</button><button class="ghost-button danger-button" data-action="reset-data">Reset profil &amp; progres</button></div></div></div></div>`;
+  return `<div class="container page-wrap">${pageHeading('Profil pemain','Atur profilmu','Nama panggilan dan karakter membantu membuat petualangan terasa milikmu.')}${bujiCard('Profil dan progres hanya tersimpan di browser pada perangkat ini. Tidak ada akun atau sinkronisasi ke server.')}<div class="profile-layout"><div class="panel profile-card"><div class="profile-avatar" aria-hidden="true">${character.emoji}</div><h2>${state.name?esc(state.name):'Petualang baru'}</h2><p class="muted">Karakter pilihan: ${esc(character.name)}</p><span class="tag">🌱 Progres belajar ${totalProgress()}%</span><div class="divider"></div><button class="primary-button" data-action="edit-profile">Ubah nama &amp; karakter</button></div><div class="panel"><h2 style="font:800 25px var(--display);margin:0 0 4px">Data di perangkat ini</h2><p class="small muted">Nama, karakter, nilai, dan progres tersimpan lokal di browser. Tidak ada data siswa yang dikirim ke server.</p><div class="profile-data-actions"><button class="ghost-button" data-action="export-data">Unduh salinan data</button><button class="ghost-button danger-button" data-action="reset-data">Reset data lokal</button></div></div></div></div>`;
 }
 function exportData(){
   try{const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='congklatika-data.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Salinan data berhasil diunduh.')}
   catch(e){toast('Unduhan belum tersedia di browser ini.')}
 }
 function resetData(){
-  if(typeof window.confirm==='function'&&!window.confirm('Hapus nama, nilai, progres, dan permainan yang tersimpan di browser ini?'))return;
-  stopNarration();state={...defaultState,levelProgress:emptyLevelProgress()};quiz={kind:null,index:0,answers:[],questions:[]};practiceAnswered={};profileDialogOpen=true;profileDialogRequired=true;profileDialogName='';profileDialogCharacter='buji';profileReturnFocus=null;
-  try{localStorage.removeItem(KEY)}catch(e){storageWarning()}
-  history.replaceState?.({congklatika:true,page:'home'},'','#home');const persisted=save();render();toast(persisted?'Profil dan progres lokal sudah direset.':'Reset berlaku untuk sesi ini, tetapi data mungkin masih tersimpan karena browser menolak perubahan.');
+  if(!resetDialogOpen)return;
+  resetDialogOpen=false;resetReturnFocus=null;stopNarration();state={...defaultState,levelProgress:emptyLevelProgress()};quiz={kind:null,index:0,answers:[],questions:[]};practiceAnswered={};profileDialogOpen=true;profileDialogRequired=true;profileDialogName='';profileDialogCharacter='buji';profileReturnFocus=null;
+  let storageReset=true;
+  try{const ownedKeys=[];for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(key?.startsWith('congklatika.'))ownedKeys.push(key)}ownedKeys.forEach(key=>{try{localStorage.removeItem(key)}catch(e){storageReset=false}})}catch(e){storageReset=false}
+  if(!storageReset)storageWarning();effects.on=true;updateEffectsControls();
+  history.replaceState?.({congklatika:true,page:'home'},'','#home');render();toast(storageReset?'Semua data lokal CongklaTika sudah direset.':'Aplikasi kembali ke awal, tetapi sebagian penyimpanan mungkin masih tersisa karena browser menolak penghapusan.');
 }
 function render(){
   const app=$('#app'),previousFocus=document.activeElement,hadAppFocus=app.contains(previousFocus),keep=focusRestoreKey||previousFocus?.dataset?.focusKey;focusRestoreKey=null;let content='';
@@ -751,7 +757,9 @@ function render(){
 function openLogin(){setPage('profile')}
 function openProfileDialog(required=!state.profileSaved){profileReturnFocus=document.activeElement;profileDialogName=state.name||'';profileDialogCharacter=state.character||'buji';profileDialogRequired=required;profileDialogOpen=true;renderActiveModal(true)}
 function closeProfileDialog(){if(!profileDialogOpen||profileDialogRequired)return;profileDialogOpen=false;renderActiveModal();const focus=profileReturnFocus;profileReturnFocus=null;if(focus?.isConnected)focus.focus({preventScroll:true})}
-function closeModal(){if(pendingQuizLeavePage!==null)cancelQuizLeave();else if(profileDialogOpen)closeProfileDialog()}
+function openResetDialog(){if(resetDialogOpen)return;resetReturnFocus=document.activeElement;resetDialogOpen=true;renderActiveModal(true)}
+function cancelResetDialog(){if(!resetDialogOpen)return;resetDialogOpen=false;renderActiveModal();const focus=resetReturnFocus;resetReturnFocus=null;if(focus?.isConnected)focus.focus({preventScroll:true})}
+function closeModal(){if(resetDialogOpen)cancelResetDialog();else if(pendingQuizLeavePage!==null)cancelQuizLeave();else if(profileDialogOpen)closeProfileDialog()}
 async function availableNarrationVoices(){
   const synth=window.speechSynthesis,available=synth.getVoices();if(available.length)return available;
   return new Promise(resolve=>{let finished=false,timer;const finish=()=>{if(finished)return;finished=true;clearTimeout(timer);synth.removeEventListener?.('voiceschanged',finish);resolve(synth.getVoices())};synth.addEventListener?.('voiceschanged',finish);timer=setTimeout(finish,900)});
@@ -838,7 +846,9 @@ function handleAction(action,el){
     case'study-reset':studyQuestion=null;clearTimeout(studyFeedbackTimer);studyFeedbackTimer=null;studyQuestionToken++;studyRound=newStudyRound();focusRestoreKey='study-pit-0';render();break;
     case'read-current':readCurrentContent();break;
     case'export-data':exportData();break;
-    case'reset-data':resetData();break;
+    case'reset-data':openResetDialog();break;
+    case'reset-cancel':cancelResetDialog();break;
+    case'reset-confirm':resetData();break;
     case'skip-profile':state.name='';state.profileSaved=false;save();setPage('home');toast('Nama dilewati. Kamu tetap bisa belajar!');break;
     case'edit-profile':openProfileDialog(false);break;
     case'close-profile':closeProfileDialog();break;
@@ -884,7 +894,7 @@ $('#menu-toggle').addEventListener('click',()=>{const nav=$('#main-nav'),expande
 document.addEventListener('keydown',e=>{
   const dialog=$('#modal-root [role="dialog"]');
   if(dialog){
-    if(e.key==='Escape'){e.preventDefault();if(pendingQuizLeavePage!==null)cancelQuizLeave();else if(profileDialogOpen)closeProfileDialog();return}
+    if(e.key==='Escape'){e.preventDefault();if(resetDialogOpen)cancelResetDialog();else if(pendingQuizLeavePage!==null)cancelQuizLeave();else if(profileDialogOpen)closeProfileDialog();return}
     if(e.key==='Tab'){const items=$$('button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex="0"]',dialog).filter(node=>node.offsetParent!==null&&node.tabIndex>=0);if(!items.length){e.preventDefault();dialog.focus();return}const first=items[0],last=items.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}return}
   }else if(e.key==='Escape')closeModal();
   const radio=e.target.closest?.('[data-quiz-answer],[data-practice],[data-study-answer],[data-profile-character]');
