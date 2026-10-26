@@ -398,14 +398,11 @@ function seedDots(count){
   const shown=Math.min(count,12),extra=Math.max(0,count-shown);
   return Array.from({length:shown},()=>'<i class="seed seed-dot" aria-hidden="true">●</i>').join('')+(extra?`<b class="seed-overflow" aria-label="dan ${extra} biji lagi">+${extra}</b>`:'');
 }
-function questionSeedMarks(count){
-  if(count>=10){const tens=Math.floor(count/10),ones=count%10;return `<span class="question-tens" aria-hidden="true">${Array.from({length:tens},()=>'<i class="question-tens-bundle">10</i>').join('')}</span>${Array.from({length:ones},()=>'<i class="question-seed"></i>').join('')}`}
-  return Array.from({length:count},()=>'<i class="question-seed"></i>').join('');
-}
-function renderQuestionPit(label,count,muted=false,display=String(count)){
+function renderQuestionPit(label,count,muted=false,display=count>0?String(count):''){
   const labelText=label?`, ${label}`:'';
-  const marks=count>0?questionSeedMarks(count):'';
-  return `<div class="question-pit${muted?' is-muted':''}${count>0?' is-active':''}" aria-label="Lubang congklak, ${count} biji${esc(labelText)}"><span class="question-pit-label" aria-hidden="true">${esc(label)}</span><span class="question-pit-seeds" aria-hidden="true">${marks}</span><strong class="question-pit-count">${esc(String(display))}</strong></div>`;
+  const labelMarkup=label?`<span class="question-pit-label" aria-hidden="true">${esc(label)}</span>`:'';
+  const countMarkup=count>0?`<strong class="question-pit-count">${esc(String(display))}</strong>`:'';
+  return `<div class="question-pit${muted?' is-muted':''}${count>0?' is-active':''}" aria-label="Lubang congklak, ${count} biji${esc(labelText)}">${labelMarkup}${countMarkup}</div>`;
 }
 function renderQuestionIllustration(t,prompt){
   const level=state.activeLevel;let title='',description='',operation='',legend='';
@@ -426,13 +423,13 @@ function renderQuestionIllustration(t,prompt){
     const sequences=[[1,3,5,7,9,11,13],[2,5,8,11,14,17,20],[4,9,14,19,24,29,34]],sequence=sequences[level-1];
     title='Temukan aturan pada lubang';description='Setiap lubang menunjukkan satu langkah pola. Bandingkan jumlah biji dari kiri ke kanan.';
     operation=level===1?'1, 3, 5, …':level===2?'2, 5, 8, …':'4, 9, 14, …';
-    sequence.forEach((value,i)=>{counts[i]=value;labels[i]=`ke-${i+1}`});
+    sequence.forEach((value,i)=>{counts[i]=value});
     legend=level===1?'Selisihnya +2 biji setiap langkah; setelah 5, lanjutkan ke 7.':level===2?'Selisihnya +3 biji setiap langkah; setelah 8, lanjutkan ke 11.':'Selisihnya +5 biji setiap langkah; setelah 14, lanjutkan ke 19.';
   }else if(t.id==='fraction'){
     title='Bagian sama besar di papan';
     description=level===1?'Empat bagian yang sama besar mewakili satu utuh.':level===2?'Dua dari empat bagian sama besar membentuk setengah.':'Samakan ukuran bagian sebelum menjumlahkan pecahan.';
     operation=level===1?'1 dari 4 bagian':level===2?'2/4 sama dengan 1/2':'1/2 + 1/4 = 3/4';
-    for(let i=0;i<4;i++){counts[i+1]=1;labels[i+1]='1/4'}
+    for(let i=0;i<4;i++)counts[i+1]=1;
     legend=level===3?'Dua bagian perempat sama dengan setengah; satu bagian lagi membuat 3/4.':'Bagian berwarna menunjukkan bagian yang dipilih; semuanya harus sama besar.';
   }else return '';
   const firstRow=Array.from({length:7},(_,i)=>renderQuestionPit(labels[i],counts[i],counts[i]===0)).join('');

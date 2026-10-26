@@ -474,3 +474,13 @@ button:disabled{opacity:.72}
 @media(max-width:420px){
   .header-actions .avatar-button{flex-basis:44px;width:44px;height:44px}
 }
+
+
+/* Numeric lesson boards: keep counts centered and group labels unobtrusive. */
+.question-illustration .question-pit{display:grid;place-items:center;position:relative}
+.question-illustration .question-pit-label{position:absolute;top:10%;left:0;right:0;min-height:0;font-size:clamp(5px,.65vw,8px);line-height:1;z-index:1}
+.question-illustration .question-pit-count{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);margin:0;z-index:1;font-size:clamp(11px,1.15vw,16px);line-height:1;text-shadow:0 1px 2px #120e0a}
+@media(max-width:520px){
+  .question-illustration .question-pit-label{top:0;font-size:clamp(4px,1.1vw,5px)}
+  .question-illustration .question-pit-count{font-size:clamp(8px,3vw,12px)}
+}
