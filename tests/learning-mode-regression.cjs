@@ -63,6 +63,8 @@ async function pageAt(browser, url, options={}) {
     await page.locator('[data-play-mode="learning"]').click();
     const trainingBoard=await page.evaluate(()=>({pits:document.querySelectorAll('[data-study-pit]').length,traditional:document.querySelectorAll('[data-pit]').length,stores:document.querySelectorAll('.board-shell .store-pit').length,seeds:studyRound.pits.reduce((a,b)=>a+b,0),smallPits:[0,1,2,3,4,5,6,8,9,10,11,12,13,14].map(i=>studyRound.pits[i]),storesEmpty:studyRound.pits[7]===0&&studyRound.pits[15]===0,mode:playMode}));
     ok(trainingBoard.pits===14&&trainingBoard.traditional===0&&trainingBoard.stores===2&&trainingBoard.seeds===98&&trainingBoard.smallPits.every(n=>n>0)&&new Set(trainingBoard.smallPits).size>1&&trainingBoard.storesEmpty&&trainingBoard.mode==='learning','mode Belajar memulai ronde acak dengan 14 lubang berisi dan tepat 98 biji');
+    const learningVisual=await page.evaluate(()=>{const board=document.querySelector('.play-page.learning-mode .board-shell'),pits=[...document.querySelectorAll('[data-study-pit]')];return {mode:!!board,pits:pits.length,rows:[...board.querySelectorAll('.pit-row')].map(row=>row.querySelectorAll('[data-study-pit]').length),stores:board.querySelectorAll('.store-pit').length,seedsHidden:pits.every(pit=>getComputedStyle(pit.querySelector('.seeds')).display==='none'),numbers:pits.every(pit=>pit.querySelector('.seed-count')?.textContent===String(studyRound.pits[Number(pit.dataset.studyPit)]))}});
+    ok(learningVisual.mode&&learningVisual.pits===14&&learningVisual.rows.join('|')==='7|7'&&learningVisual.stores===2&&learningVisual.seedsHidden&&learningVisual.numbers,'ilustrasi Mode Belajar menampilkan angka pada 14 lubang dalam dua baris dan tanpa gambar biji');
     await page.locator('[data-study-topic="addition"]').click();
     await page.locator('[data-study-pit="0"]').click();
     ok((await page.locator('.study-question-modal h2').innerText()).includes('menambah 3 biji')&&await page.locator('.study-question-modal[role="dialog"][aria-modal="true"]').count()===1,'mengetuk lubang membuka popup soal aksesibel dengan jumlah biji lubang');
@@ -111,6 +113,7 @@ async function pageAt(browser, url, options={}) {
     ok(await page.evaluate(()=>studyRound.answered===0&&studyRound.pits.reduce((a,b)=>a+b,0)===98&&studyRound.pits[7]===0&&studyRound.pits[15]===0),'tombol ronde baru mengacak kembali 98 biji tanpa mengubah aturan congklak');
     await page.locator('[data-play-mode="traditional"]').click();
     ok(await page.locator('[data-pit]').count()===14&&await page.locator('[data-study-pit]').count()===0&&await page.locator('[data-game-mode]').count()===2,'mode Tradisional tetap menyediakan 14 lubang dan pilihan 2 pemain/Buji');
+    ok(await page.locator("[data-pit='0'] .seeds").evaluate(el=>getComputedStyle(el).display!=='none'),'gambar biji tetap tampil pada papan interaktif Mode Tradisional');
     await page.locator('[data-pit="0"]').click();
     await page.waitForFunction(()=>state.game&&!state.game.animating,{},{timeout:12000});
     ok(await page.evaluate(()=>state.game.pits.reduce((a,b)=>a+b,0)===98),'satu langkah tradisional tetap berjalan dan menjaga tepat 98 biji');

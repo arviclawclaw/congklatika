@@ -356,6 +356,8 @@ button:disabled{opacity:.72}
 .study-progress-copy .progress-track{height:9px}
 .play-page .pit.study-picked{border-color:#7da17d;background:radial-gradient(ellipse at 35% 28%,#455a43,#27372d);box-shadow:inset 0 4px 9px #120e0a88,0 2px 0 #96a886;color:#e7e8dc;cursor:not-allowed}
 .play-page .pit.study-picked .seed-count{color:#d9dfd2;text-decoration:line-through;text-decoration-color:#a4c395}
+.play-page.learning-mode .pit .seeds{display:none}
+.play-page.learning-mode .pit .seed-count{margin-top:0;text-shadow:none}
 @keyframes study-pop-in{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
 @media(max-width:520px){
   .themed-modal-backdrop{padding-inline:12px}
