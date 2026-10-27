@@ -174,7 +174,7 @@ button:disabled{opacity:.72}
 .question-illustration{margin:16px 0;padding:16px;border:1px solid #e8e2d2;border-radius:18px;background:#fffdf7}
 .question-illustration-heading{display:grid;gap:3px;margin-bottom:12px}
 .question-illustration-heading>strong{font:800 19px/1.25 var(--display);color:#284c39}
-.question-illustration-heading p{margin:0;color:#4d6155;font-size:13px;line-height:1.45}
+.question-illustration-heading p{margin:0;color:#4d6155;font-size:16px;line-height:1.5}
 .question-board{padding:10px;border:5px solid #d2995f;border-radius:22px;background:linear-gradient(145deg,#a66f43,#6a4229);box-shadow:inset 0 2px 8px #51341e70}
 .question-board-row{display:grid;grid-template-columns:58px minmax(0,1fr) 58px;gap:8px;align-items:stretch}
 .question-board-store{display:grid;place-items:center;min-height:92px;padding:4px;border:1px solid #dca969;border-radius:45%;background:radial-gradient(ellipse at 35% 28%,#613d27,#2e241b);color:#ffe4ad;text-align:center;font:800 8px/1.15 var(--body);overflow-wrap:anywhere}
@@ -189,7 +189,7 @@ button:disabled{opacity:.72}
 .question-pit-count{font:800 clamp(6px,1vw,11px)/1 var(--body);color:#ffe4ad}
 .question-pit.is-muted{background:radial-gradient(ellipse at 35% 28%,#796c58,#39332b)}
 .question-operation{margin:9px 0 0;text-align:center;font-weight:900;color:#344e3d}
-.question-legend{margin:4px 0 0;text-align:center;color:#526658;font-size:12px;line-height:1.45}
+.question-legend{margin:4px 0 0;text-align:center;color:#526658;font-size:15px;line-height:1.5}
 .fraction-pit{background:radial-gradient(ellipse at 35% 28%,#613d27,#2e241b)}
 .fraction-pit .fraction-bead{font-size:16px;line-height:1;color:#e6bb68;text-shadow:0 1px 2px #160f08}
 .fraction-pit .fraction-part-label{font:800 10px/1 var(--body);color:#ffe4ad}
@@ -208,6 +208,7 @@ button:disabled{opacity:.72}
   .question-pit{max-width:none;padding:1px}
   .question-pit-label{font-size:clamp(5px,1.7vw,8px)}
   .question-seed{width:4px;height:4px}
+  .question-pit-count{font-size:clamp(12px,3.7vw,14px)}
 }
 @media(max-width:350px){
   .question-board-row{grid-template-columns:28px minmax(0,1fr) 28px;gap:3px}
@@ -483,4 +484,64 @@ button:disabled{opacity:.72}
 @media(max-width:520px){
   .question-illustration .question-pit-label{top:0;font-size:clamp(4px,1.1vw,5px)}
   .question-illustration .question-pit-count{font-size:clamp(8px,3vw,12px)}
+}
+
+
+/* Skala huruf ramah anak: isi 18 px, bantuan minimal 15 px. */
+body{font-size:18px;line-height:1.6}
+.eyebrow{font-size:14px;line-height:1.4;letter-spacing:.15px;text-transform:none}
+.small,.source-note,.visual-note,.progress-row,.quiz-top,.topic-card p,.feature-card p,.hero-note,.mission-note,.mode-choice small,.level-card small,.site-footer{font-size:15px;line-height:1.5}
+.lesson-progress .progress-row{font-size:15px}
+.tag,.topic-status,.quiz-category,.metric span,.score-table,.footer-link,.profile-local-note{font-size:15px}
+.nav-link,.login-button{font-size:16px}
+.music-button{font-size:15px}
+.primary-button,.secondary-button,.ghost-button,.danger-confirm-button,.answer-chip,.quiz-option,.study-topic-button{font-size:18px;line-height:1.35;white-space:normal;overflow-wrap:anywhere}
+.primary-button,.secondary-button,.ghost-button,.danger-confirm-button{min-height:46px}
+.answer-chip,.quiz-option,.study-topic-button{min-height:48px}
+.mode-choice b{font-size:16px}
+.profile-character-option b{font-size:15px}
+.study-modal-hint{font-size:17px!important;line-height:1.55}
+.bottom-nav a{font-size:14px}
+.question-pit-label{font-size:9px}
+.question-board-store{font-size:9px;line-height:1.2;overflow-wrap:anywhere}
+.page-wrap,.panel,.lesson-card,.topic-card,.feature-card,.themed-modal{min-width:0}
+.page-wrap p,.page-wrap li,.topic-card p,.feature-card p,.themed-modal p,.rule-step p{overflow-wrap:anywhere}
+.primary-button,.secondary-button,.ghost-button,.answer-chip,.quiz-option,.study-topic-button,.mode-choice{min-width:0}
+@media(max-width:760px){
+  body{font-size:18px}
+  .bottom-nav a{font-size:14px;white-space:normal;text-align:center}
+  .lesson-card p,.lesson-guide-intro p,.lesson-guide-bridge li,.worked-example li,.mini-question p{font-size:18px;line-height:1.6}
+  .source-note,.small,.visual-note,.progress-row,.quiz-top,.topic-card p,.feature-card p,.hero-note,.mission-note,.mode-choice small,.level-card small{font-size:15px;line-height:1.5}
+}
+@media(max-width:350px){
+  .bottom-nav a{font-size:13px}
+  .lesson-progress .progress-row{font-size:15px}
+  .question-pit-label{font-size:9px}
+  .question-board-store{font-size:8px}
+}
+
+
+/* Keep secondary copy and game instructions readable after legacy responsive rules. */
+.small,.source-note,.visual-note,.profile-local-note,.footer-link,.team-card p,.team-member-id,.form-field,.turn-banner strong,.play-page .game-message{font-size:16px;line-height:1.5}
+.rule-step p,.play-page .rule-step p,.play-page .game-rules>p,.visual-heading p,.team-class{font-size:16px;line-height:1.55}
+.score-table th,.score-table td{font-size:15px;line-height:1.45}
+.score-table th{text-transform:none;letter-spacing:0}
+.game-message-label{font-size:14px;letter-spacing:0;text-transform:none}
+.play-page .mode-choice small{font-size:15px;line-height:1.5}
+.play-page .mode-choice b{font-size:17px}
+.play-page .game-actions button{font-size:16px;line-height:1.4}
+.play-page .board-labels{font-size:12px;letter-spacing:0;text-transform:none}
+.play-page .store-pit small{font-size:11px;letter-spacing:0}
+.sfx-toggle[data-sfx-full]{font-size:15px}
+@media(max-width:760px){
+  .section-heading p,.page-heading p,.band p,.hero .lead,.buji-bubble{font-size:18px;line-height:1.55}
+  .feature-card p,.topic-card p,.mode-choice small,.visual-heading p,.rule-step p,.play-page .rule-step p,.play-page .game-rules>p,.play-page .game-message{font-size:16px;line-height:1.55}
+  .play-page .board-labels{font-size:11px}
+  .play-page .store-pit small{font-size:11px}
+  .header-actions #login-button{font-size:14px}
+}
+@media(max-width:350px){
+  .bottom-nav a{font-size:14px}
+  .header-actions #login-button{font-size:13px}
+  .play-page .board-labels{font-size:10px}
 }

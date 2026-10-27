@@ -74,7 +74,7 @@ async function answerCurrent(page, answerCorrect=true) {
     ok(await legacyProfilePage.evaluate(stored=>state.name==='Pemain Lama'&&state.activeLevel===3&&localStorage.getItem(KEY)===stored,beforeReset.stored),'fungsi reset tidak melakukan apa pun tanpa dialog dan konfirmasi eksplisit');
     await legacyProfilePage.locator('#reset-toggle').click();
     const resetDialog=legacyProfilePage.locator('.reset-confirmation-modal[role="dialog"][aria-modal="true"]');await resetDialog.waitFor();
-    ok((await resetDialog.getAttribute('aria-describedby'))==='reset-dialog-description'&&(await resetDialog.locator('#reset-dialog-description').innerText()).includes('nilai tes')&&(await resetDialog.locator('#reset-dialog-description').innerText()).includes('draf tes')&&await legacyProfilePage.evaluate(stored=>document.activeElement.dataset.action==='reset-cancel'&&localStorage.getItem(KEY)===stored,beforeReset.stored),'dialog reset menjelaskan data yang dihapus, belum mengubah penyimpanan, dan fokus awal berada pada Batal');
+    ok((await resetDialog.getAttribute('aria-describedby'))==='reset-dialog-description'&&(await resetDialog.locator('#reset-dialog-description').innerText()).includes('nilai tes')&&(await resetDialog.locator('#reset-dialog-description').innerText()).includes('jawaban tes yang belum selesai')&&await legacyProfilePage.evaluate(stored=>document.activeElement.dataset.action==='reset-cancel'&&localStorage.getItem(KEY)===stored,beforeReset.stored),'dialog reset menjelaskan data yang dihapus, belum mengubah penyimpanan, dan fokus awal berada pada Batal');
     await legacyProfilePage.keyboard.press('Shift+Tab');
     ok(await legacyProfilePage.evaluate(()=>document.activeElement.dataset.action==='reset-confirm'),'fokus Shift+Tab tetap terkurung di dalam dialog reset');
     await legacyProfilePage.keyboard.press('Tab');
@@ -104,7 +104,7 @@ async function answerCurrent(page, answerCorrect=true) {
     await page.locator('[data-visual-key="groups"][data-step="1"]').click(); await page.locator('[data-visual-key="groups"][data-step="1"]').click();
     ok((await page.locator('.visual-equation').innerText()).includes('÷ 6 lubang') && await page.locator('[data-visual-key="groups"][data-step="1"]').isDisabled(), 'stepper berhenti pada batas atas tanpa menghasilkan pembagian pecahan');
     const visualSpeech=await page.evaluate(()=>currentNarrationText());
-    ok(visualSpeech.includes('12 biji dibagikan ke 6 lubang')&&visualSpeech.includes('Tantangan aktif'), 'narasi memakai isi latihan visual dan soal mini yang aktif');
+    ok(visualSpeech.includes('Latihan gambar: 12 biji dibagikan ke 6 lubang')&&visualSpeech.includes('Tantangan.')&&visualSpeech.includes('Bayangkan di papan congklak.'), 'narasi memakai materi terbaru, latihan visual, dan tantangan yang aktif');
     await page.evaluate(()=>{
       window.__spokenText='';window.__speechCancelled=false;window.__musicGain=0;
       Object.defineProperty(window,'SpeechSynthesisUtterance',{configurable:true,value:function(text){this.text=text}});
@@ -114,7 +114,7 @@ async function answerCurrent(page, answerCorrect=true) {
       musicMaster={gain:{setTargetAtTime:value=>{window.__musicGain=value}}};music.ctx={currentTime:0};
     });
     await page.locator('[data-action="read-current"]').click();
-    await page.locator('#toast-region').getByText(/Pembacaan suara gagal/).waitFor();
+    await page.locator('#toast-region').getByText(/Bacaan suara gagal/).waitFor();
     ok(await page.evaluate(()=>!narrationActive), 'kegagalan TTS ditangani tanpa menghentikan materi');
     await page.evaluate(()=>{Object.defineProperty(window.speechSynthesis,'speak',{configurable:true,value:utterance=>{window.__spokenText=utterance.text}})});
     await page.locator('[data-action="read-current"]').click(); await page.waitForFunction(()=>narrationActive);
@@ -163,15 +163,15 @@ async function answerCurrent(page, answerCorrect=true) {
     ok(await page.locator('.quiz-card h2').innerText()===savedQuestion && await page.evaluate(()=>state.quizDraft?.answers.some(x=>x!==null)), 'draf jawaban dan posisi soal pulih setelah refresh');
     let nativeConfirm=false;page.on('dialog',async d=>{nativeConfirm=true;await d.dismiss()});
     await page.goBack();const leaveDialog=page.locator('.quiz-leave-modal[role="dialog"][aria-modal="true"]');await leaveDialog.waitFor();
-    ok(await leaveDialog.getByRole('heading',{name:'Tes belum selesai'}).count()===1&&await leaveDialog.getByRole('button',{name:'Lanjut tes'}).count()===1&&await leaveDialog.getByRole('button',{name:'Tinggalkan tes'}).count()===1&&!nativeConfirm,'browser Back membuka dialog CongklaTika dengan dua pilihan, bukan confirm bawaan browser');
+    ok(await leaveDialog.getByRole('heading',{name:'Tes belum selesai'}).count()===1&&await leaveDialog.getByRole('button',{name:'Lanjut tes'}).count()===1&&await leaveDialog.getByRole('button',{name:'Keluar dari tes'}).count()===1&&!nativeConfirm,'browser Back membuka dialog CongklaTika dengan dua pilihan, bukan confirm bawaan browser');
     await leaveDialog.getByRole('button',{name:'Lanjut tes'}).focus();await page.keyboard.press('Tab');
-    ok(await page.evaluate(()=>document.activeElement.textContent.includes('Tinggalkan tes')),'fokus keyboard bergerak ke pilihan dialog berikutnya');
+    ok(await page.evaluate(()=>document.activeElement.textContent.includes('Keluar dari tes')),'fokus keyboard bergerak ke pilihan dialog berikutnya');
     await page.keyboard.press('Tab');ok(await page.evaluate(()=>document.activeElement.textContent.includes('Lanjut tes')),'fokus keyboard dialog berputar kembali tanpa keluar dari popup');
     await leaveDialog.getByRole('button',{name:'Lanjut tes'}).click();
     ok(await page.evaluate(()=>state.page==='quiz'&&state.quizDraft?.kind==='pre'),'tombol Lanjut tes menutup dialog dan mempertahankan kuis aktif');
     await page.locator('.nav-link[data-page="learn"]').click();await leaveDialog.waitFor();
-    await leaveDialog.getByRole('button',{name:'Tinggalkan tes'}).click();await page.waitForFunction(()=>state.page==='learn');
-    ok(await page.evaluate(()=>state.page==='learn'&&state.quizDraft?.kind==='pre'&&state.quizDraft.answers.some(x=>x!==null)),'Tinggalkan tes membuka materi tetapi mempertahankan draf jawaban tersimpan');
+    await leaveDialog.getByRole('button',{name:'Keluar dari tes'}).click();await page.waitForFunction(()=>state.page==='learn');
+    ok(await page.evaluate(()=>state.page==='learn'&&state.quizDraft?.kind==='pre'&&state.quizDraft.answers.some(x=>x!==null)),'Keluar dari tes membuka materi tetapi mempertahankan jawaban tersimpan');
     await page.locator('[data-action="start-pretest"]').click();await answerCurrent(page,true);
     ok(await page.evaluate(()=>state.preScores.total===10&&state.preAttempts.length===1), 'hasil pretest disimpan sebagai percobaan pertama');
     await page.locator('[data-action="result-continue"]').click();await nav(page,'report');
@@ -181,7 +181,7 @@ async function answerCurrent(page, answerCorrect=true) {
     const firstPreId=await page.evaluate(()=>state.preAttempts[0].id);
     ok(await page.evaluate(()=>quiz.kind==='post'&&state.quizDrafts.pre?.kind==='pre'&&state.quizDrafts.post?.kind==='post'&&quiz.baselineId===state.preAttempts[0].id), 'memulai posttest tidak menimpa draf pretest dan mengikat baseline saat tes dimulai');
     await nav(page,'learn');
-    ok(await page.locator('[data-action="start-pretest"]').innerText().then(x=>x.includes('Lanjutkan draf pretest'))&&await page.locator('[data-action="start-posttest"]').innerText().then(x=>x.includes('Lanjutkan draf posttest')), 'kedua draf tetap tersedia untuk dilanjutkan secara terpisah');
+    ok(await page.locator('[data-action="start-pretest"]').innerText().then(x=>x.includes('Lanjutkan tes awal'))&&await page.locator('[data-action="start-posttest"]').innerText().then(x=>x.includes('Lanjutkan tes akhir')), 'kedua draf tetap tersedia untuk dilanjutkan secara terpisah');
     await page.reload();await page.waitForFunction(()=>state.page==='quiz'&&state.quizDrafts.pre?.kind==='pre'&&state.quizDrafts.post?.kind==='post');
     ok(await page.evaluate(()=>quiz.kind==='post'&&quiz.baselineId===state.preAttempts[0].id&&state.quizDrafts.pre?.kind==='pre'), 'refresh memulihkan tes aktif sekaligus kedua draf dan baseline');
     await nav(page,'learn');await page.locator('[data-action="start-pretest"]').click();
@@ -189,7 +189,7 @@ async function answerCurrent(page, answerCorrect=true) {
     await answerCurrent(page,false);
     ok(await page.evaluate(()=>state.preAttempts.length===2&&!state.quizDrafts.pre&&state.quizDrafts.post?.kind==='post'), 'retake pretest selesai sebagai percobaan kedua sementara draf posttest tetap ada');
     await page.locator('[data-action="result-continue"]').click();
-    ok(await page.locator('[data-action="start-posttest"]').innerText().then(x=>x.includes('Lanjutkan draf posttest')), 'draf posttest tetap dapat dilanjutkan setelah pretest selesai');
+    ok(await page.locator('[data-action="start-posttest"]').innerText().then(x=>x.includes('Lanjutkan tes akhir')), 'draf posttest tetap dapat dilanjutkan setelah pretest selesai');
     await page.locator('[data-action="start-posttest"]').click();
     ok(await page.evaluate(()=>quiz.kind==='post'&&quiz.baselineId===state.preAttempts[0].id&&state.quizDrafts.post?.kind==='post'), 'posttest melanjutkan draf dengan baseline awal yang tidak berubah');
     await answerCurrent(page,true);
@@ -202,7 +202,7 @@ async function answerCurrent(page, answerCorrect=true) {
     ok(afterRetake.baseline===afterRetake.firstPre, 'posttest mempertahankan tautan baseline semula sesudah retake');
     await page.locator('[data-action="result-continue"]').click();await nav(page,'report');
     const reportTable=await page.locator('.score-table').innerText();
-    ok(reportTable.toLowerCase().includes('pretest pasangan posttest')&&reportTable.includes('/2')&&!reportTable.includes('%')&&await page.locator('.source-note').filter({hasText:/Pretest yang lebih baru tetap disimpan/}).count()===1, 'laporan menampilkan baseline berpasangan, jumlah benar, dan retake lebih baru secara terpisah');
+    ok(reportTable.toLowerCase().includes('tes awal sebelumnya')&&reportTable.includes('/2')&&!reportTable.includes('%')&&await page.locator('.source-note').filter({hasText:/Tes awal yang lebih baru tetap disimpan/}).count()===1, 'laporan menampilkan nilai tes pembanding, jumlah benar, dan tes awal terbaru secara terpisah');
 
      await page.evaluate(()=>{setPage('play');state.game=initialGame('two');state.game.pits[0]=13;state.game.pits[1]=1;render();save()});
      ok(await page.locator('[data-pit="0"] .seed-count').innerText()==='13' && await page.locator('[data-pit="0"] .seed-overflow').innerText()==='+1' && (await page.locator('[data-pit="0"] .seed').count())===12, 'lubang 13 biji menunjukkan 12 butir plus sisa +1 secara tepat');
@@ -235,7 +235,7 @@ async function answerCurrent(page, answerCorrect=true) {
     await outcomePage.locator('[data-pit="2"]').click();await outcomePage.waitForFunction(()=>state.game&&!state.game.animating&&state.game.pits[7]===5);await outcomePage.locator('#toast-region').getByText(/Tangkap! 5 biji/).waitFor();
     const captured=await outcomePage.evaluate(()=>({sum:state.game.pits.reduce((a,b)=>a+b,0),opposite:state.game.pits[11],own:state.game.pits[3],store:state.game.pits[7],className:document.querySelector('[data-store="7"]')?.className,animation:getComputedStyle(document.querySelector('[data-store="7"]')).animationName,tones:window.__toneFrequencies.slice()}));
     ok(captured.sum===98&&captured.opposite===0&&captured.own===0&&captured.store===5&&captured.className.includes('capture-pop')&&captured.animation==='none'&&captured.tones.includes(740)&&captured.tones.includes(990),'capture memakai outcome aktual, mempertahankan 98 biji, memberi animasi/bunyi lembut, dan menghormati reduced-motion');
-    await outcomePage.evaluate(()=>{const pits=Array(16).fill(0);pits[0]=92;pits[1]=1;pits[2]=2;pits[8]=3;state.game={...initialGame('two'),pits,turn:0,undoStack:[]};render();save()});await outcomePage.locator('[data-pit="1"]').click();await outcomePage.waitForFunction(()=>state.game&&!state.game.animating&&state.game.turn===1);await outcomePage.locator('#toast-region').getByText(/Kombo! Biji berantai 1 kali/).waitFor();
+    await outcomePage.evaluate(()=>{const pits=Array(16).fill(0);pits[0]=92;pits[1]=1;pits[2]=2;pits[8]=3;state.game={...initialGame('two'),pits,turn:0,undoStack:[]};render();save()});await outcomePage.locator('[data-pit="1"]').click();await outcomePage.waitForFunction(()=>state.game&&!state.game.animating&&state.game.turn===1);await outcomePage.locator('#toast-region').getByText(/Biji berpindah berantai 1 kali/).waitFor();
     const combo=await outcomePage.evaluate(()=>({sum:state.game.pits.reduce((a,b)=>a+b,0),message:state.game.message,classes:document.querySelector('.board-shell')?.className,animation:getComputedStyle(document.querySelector('.board-shell')).animationName,tones:window.__toneFrequencies.slice()}));
     ok(combo.sum===98&&combo.message.includes('Biji disebar lanjut 1 kali')&&combo.classes.includes('combo-glow')&&combo.animation==='none'&&combo.tones.includes(520)&&combo.tones.includes(700)&&combo.tones.includes(880),'relay/kombo dikenali dari langkah nyata, dinotifikasi, dianimasikan, berbunyi, dan tetap konservatif');
     await outcomePage.evaluate(()=>{const pits=Array(16).fill(0);pits[0]=1;pits[6]=90;pits[8]=7;state.game={...initialGame('ai'),pits,turn:0,undoStack:[]};render();save()});await outcomePage.locator('[data-pit="0"]').click();await outcomePage.locator('#toast-region').getByText(/Giliran Buji!/).waitFor();await outcomePage.locator('#toast-region').getByText(/Buji mengambil \d+ biji dan mulai menabur/).waitFor({timeout:7000});await outcomePage.waitForFunction(()=>state.game&&!state.game.animating,{},{timeout:7000});
@@ -243,13 +243,13 @@ async function answerCurrent(page, answerCorrect=true) {
 
     const skip=await newContext(browser),skipPage=await skip.newPage();skipPage.setDefaultTimeout(5000);skipPage.on('pageerror',e=>pageErrors.push(e.message));await goto(skipPage,url);
     await skipPage.evaluate(()=>{state.levelProgress={1:topics.map(t=>t.id),2:topics.map(t=>t.id),3:topics.map(t=>t.id)};state.activeLevel=3;state.page='report';save();render()});
-    ok((await skipPage.locator('.report-materials').innerText()).includes('Pretest awal dilewati') && (await skipPage.locator('.level-report li').count())===3, 'laporan tanpa pretest tetap menampilkan progres materi per level');
+    ok((await skipPage.locator('.report-materials').innerText()).includes('Kamu melewati tes awal') && (await skipPage.locator('.level-report li').count())===3, 'laporan tanpa tes awal tetap menampilkan kemajuan materi per level');
     await skipPage.close();
 
     for(const width of [390,375,360,320]){
       const mc=await newContext(browser,{viewport:{width,height:800},isMobile:true,hasTouch:true}),mp=await mc.newPage();mp.setDefaultTimeout(5000);mp.on('pageerror',e=>pageErrors.push(e.message));await goto(mp,url);
       const before=await mp.evaluate(()=>({overflow:document.documentElement.scrollWidth-innerWidth,header:[...document.querySelectorAll('.site-header>* , .header-actions>*')].filter(e=>getComputedStyle(e).display!=='none').map(e=>{const r=e.getBoundingClientRect();return [r.left,r.right]} ),reset:(()=>{const b=document.querySelector('#reset-toggle'),r=b.getBoundingClientRect();return {visible:getComputedStyle(b).display!=='none',adjacent:b.previousElementSibling?.id==='music-toggle',label:b.getAttribute('aria-label'),height:r.height,right:r.right}})()}));
-      ok(before.overflow===0&&before.header.every(([l,r])=>l>=-1&&r<=width+1)&&before.reset.visible&&before.reset.adjacent&&before.reset.label==='Reset data lokal'&&before.reset.height>=44&&before.reset.right<=width+1, `${width}px: header muat, tombol Reset berdekatan dengan Musik, dan target sentuh tidak meluber`);
+      ok(before.overflow===0&&before.header.every(([l,r])=>l>=-1&&r<=width+1)&&before.reset.visible&&before.reset.adjacent&&before.reset.label==='Hapus data di perangkat'&&before.reset.height>=44&&before.reset.right<=width+1, `${width}px: header muat, tombol Hapus data berdekatan dengan Musik, dan target sentuh tidak meluber`);
       await mp.locator('.avatar-button[data-page="profile"]').click();
       const mobileAvatarColors=await mp.evaluate(()=>({profile:getComputedStyle(document.querySelector('.profile-avatar')).backgroundColor,header:getComputedStyle(document.querySelector('.avatar-button')).backgroundColor,music:getComputedStyle(document.querySelector('#music-toggle')).backgroundColor}));
       ok(mobileAvatarColors.profile===mobileAvatarColors.music&&mobileAvatarColors.header===mobileAvatarColors.music,`${width}px: latar avatar Profil dan header cocok dengan tombol Musik`);
@@ -278,7 +278,7 @@ async function answerCurrent(page, answerCorrect=true) {
     ok(await brokenPage.locator('.hero').count()===1&&await brokenPage.getByText(/Data sebelumnya rusak/).count()===1, 'data JSON rusak pulih ke aplikasi yang dapat dipakai dengan pemberitahuan');await broken.close();
 
     const quota=await newContext(browser),quotaPage=await quota.newPage();quotaPage.setDefaultTimeout(5000);quotaPage.on('pageerror',e=>pageErrors.push(e.message));await quotaPage.addInitScript(()=>Object.defineProperty(Storage.prototype,'setItem',{value(){throw new DOMException('quota','QuotaExceededError')}}));await goto(quotaPage,url);await nav(quotaPage,'learn');
-    ok(await quotaPage.locator('.topic-grid').count()===1&&await quotaPage.getByText(/Penyimpanan browser tidak tersedia/).count()===1, 'kegagalan/kuota localStorage menampilkan peringatan tanpa menghentikan belajar');await quota.close();
+    ok(await quotaPage.locator('.topic-grid').count()===1&&await quotaPage.getByText(/Data tidak bisa disimpan/).count()===1, 'kegagalan/kuota penyimpanan menampilkan peringatan tanpa menghentikan belajar');await quota.close();
 
     const profile=await newContext(browser,{acceptDownloads:true}),profilePage=await profile.newPage();profilePage.setDefaultTimeout(5000);profilePage.on('pageerror',e=>pageErrors.push(e.message));await goto(profilePage,url,{onboard:false});
     await profilePage.locator('#profile-name').fill('Ayu');await profilePage.locator('[data-profile-character="buji"]').click();await profilePage.locator('#profile-form [type="submit"]').click();
@@ -286,7 +286,7 @@ async function answerCurrent(page, answerCorrect=true) {
     const profileAvatarColors=await profilePage.evaluate(()=>({profile:getComputedStyle(document.querySelector('.profile-avatar')).backgroundColor,header:getComputedStyle(document.querySelector('.avatar-button')).backgroundColor,music:getComputedStyle(document.querySelector('#music-toggle')).backgroundColor,border:getComputedStyle(document.querySelector('.profile-avatar')).borderTopColor}));
     ok(profileAvatarColors.profile===profileAvatarColors.music&&profileAvatarColors.header===profileAvatarColors.music&&profileAvatarColors.border!=='rgba(0, 0, 0, 0)','halaman Profil dan avatar header memakai latar tombol Musik dengan bingkai berkontras');
     const headerReset=await profilePage.evaluate(()=>({adjacent:document.querySelector('#music-toggle').nextElementSibling?.id==='reset-toggle',label:document.querySelector('#reset-toggle').getAttribute('aria-label'),title:document.querySelector('#reset-toggle').title}));
-    ok(headerReset.adjacent&&headerReset.label==='Reset data lokal'&&headerReset.title==='Reset data lokal','tombol Reset berada tepat di sebelah Musik dan memiliki label aksesibel');
+    ok(headerReset.adjacent&&headerReset.label==='Hapus data di perangkat'&&headerReset.title==='Hapus data di perangkat','tombol Hapus data berada tepat di sebelah Musik dan memiliki label aksesibel');
     const [download]=await Promise.all([profilePage.waitForEvent('download'),profilePage.locator('[data-action="export-data"]').click()]);
     ok(download.suggestedFilename()==='congklatika-data.json', 'profil menyediakan ekspor salinan data lokal');
     const storedBeforeProfileReset=await profilePage.evaluate(()=>localStorage.getItem(KEY));
@@ -300,11 +300,11 @@ async function answerCurrent(page, answerCorrect=true) {
     await latePage.locator('[data-action="start-posttest"]').click();await answerCurrent(latePage,true);await latePage.locator('[data-action="result-continue"]').click();
     await latePage.evaluate(()=>{const scores={total:0};topics.forEach(t=>scores[t.id]={correct:0,total:2});state.preScores=scores;state.preAttempts.push({id:'late-pre',kind:'pre',at:new Date().toISOString(),scores,questions:[],answers:[],baselineId:null});save();setPage('report')});await latePage.reload();
     const lateTable=(await latePage.locator('.score-table').innerText()).toLowerCase();
-    ok(lateTable.includes('tanpa pasangan')&&!lateTable.includes('perubahan')&&await latePage.locator('.source-note').filter({hasText:/tidak memiliki pretest baseline/}).count()===1, 'posttest tanpa pretest terdahulu tetap dipisah dari pretest yang dikerjakan belakangan');await late.close();
+    ok(lateTable.includes('tes awal terbaru')&&!lateTable.includes('perubahan')&&await latePage.locator('.source-note').filter({hasText:/Tidak ada tes awal yang dikerjakan sebelum tes akhir ini/}).count()===1, 'tes akhir tanpa tes awal sebelumnya tetap dipisah dari tes awal yang dikerjakan belakangan');await late.close();
 
     const legacy=await newContext(browser),legacyPage=await legacy.newPage();legacyPage.setDefaultTimeout(5000);legacyPage.on('pageerror',e=>pageErrors.push(e.message));await goto(legacyPage,url);
     await legacyPage.evaluate(()=>{state.preScores={total:7,addition:100,subtraction:50,multiplication:100,division:50,fraction:50};state.postScores={total:6,addition:50,subtraction:100,multiplication:100,division:0,fraction:50};state.preAttempts=[];state.postAttempts=[];state.quizDraft=null;state.page='report';save();const old=JSON.parse(localStorage.getItem(KEY));delete old.preAttempts;delete old.postAttempts;delete old.quizDraft;delete old.quizDrafts;localStorage.setItem(KEY,JSON.stringify(old))});await legacyPage.reload();
-    ok(await legacyPage.evaluate(()=>state.preAttempts.length===1&&state.postAttempts.length===1&&state.postAttempts[0].baselineId===state.preAttempts[0].id)&&(await legacyPage.locator('.score-table').innerText()).toLowerCase().includes('pretest pasangan posttest'), 'skor lama tetap dipasangkan secara aman saat dimigrasikan ke riwayat percobaan');await legacy.close();
+    ok(await legacyPage.evaluate(()=>state.preAttempts.length===1&&state.postAttempts.length===1&&state.postAttempts[0].baselineId===state.preAttempts[0].id)&&(await legacyPage.locator('.score-table').innerText()).toLowerCase().includes('tes awal sebelumnya'), 'skor lama tetap dipasangkan secara aman saat dimigrasikan ke riwayat percobaan');await legacy.close();
 
     ok(pageErrors.length===0, `tidak ada JavaScript page error (${pageErrors.join('; ')})`);
     console.log(`PASS congklatika browser regression (${checks} checks)`);

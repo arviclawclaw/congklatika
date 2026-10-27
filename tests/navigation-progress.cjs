@@ -74,7 +74,7 @@ async function navClick(page, route) { await page.locator(`[data-bottom-route="$
       ok(layout.scrollWidth===width, `${width}px: tidak ada overflow horizontal`);
       ok(layout.display==='grid'&&layout.position==='fixed'&&Math.abs(layout.bottom-820)<1, `${width}px: navigasi bawah tetap di dasar viewport`);
       ok(layout.bodyPadding>=layout.height, `${width}px: ruang scroll halaman melindungi konten dari nav/safe-area`);
-      ok(layout.labels.join('|')==='Beranda|Belajar|Bermain|Kuis|Info', `${width}px: kelima tab dan labelnya tersedia`);
+      ok(layout.labels.join('|')==='Beranda|Belajar|Bermain|Kuis|Cerita', `${width}px: kelima tab dan labelnya tersedia`);
       ok(await mobile.locator('.bottom-nav [aria-current="page"]').getAttribute('data-bottom-route')==='home', `${width}px: tab aktif Beranda diumumkan`);
 
       await mobile.locator('[data-bottom-route="learn"]').focus();
